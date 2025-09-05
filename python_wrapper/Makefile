@@ -1,0 +1,77 @@
+# =====================================
+# Makefile to build NEMO Python wrapper
+# =====================================
+WRAPPER_HOME := $(shell pwd)
+ARCH_FCM     := $(WRAPPER_HOME)/../arch_nemo.fcm
+ARCH         := arch_nemo.mk
+
+NEMO_LIB     := libnemo.so
+
+SRC_DIR      := $(WRAPPER_HOME)/src/nemo_interface
+OBJ_DIR      := $(WRAPPER_HOME)/build/fortran
+INC_DIR      := $(WRAPPER_HOME)/build/include
+LIB_DIR      := $(WRAPPER_HOME)/build/lib
+PY_DIR       := $(WRAPPER_HOME)/build/python
+NEMO_INC_DIR := $(WRAPPER_HOME)/../inc
+
+OBJ = nemo_mod.o nemo_c_interface.o 
+
+###########################################
+###########################################
+-include $(ARCH)
+
+all: $(ARCH)
+	@if [ ! -f $(ARCH) ]; then \
+		$(MAKE) --no-print-directory all; \
+	else \
+		$(MAKE) --no-print-directory build; \
+	fi
+
+
+## ---------------------------------------
+## Compilation environment
+## ---------------------------------------
+$(ARCH): $(ARCH_FCM)
+	@echo "   >>> Copy NEMO arch file"
+	@sed -E \
+	  -e '/^%[A-Za-z0-9_]+[[:space:]]*$$/d' \
+	  -e 's/^%([A-Za-z0-9_]+)[[:space:]]+(.*)/\1 = \2/' \
+	  -e 's/%([A-Za-z0-9_]+)/$$(\1)/g' \
+	  $< > $@
+
+dirs:
+	@echo "   >>> Compile shared NEMO library"
+	@echo "   -------------------------------"
+	@mkdir -p $(LIB_DIR) $(OBJ_DIR) $(INC_DIR) $(PY_DIR)	
+
+
+## ---------------------------------------
+## Compilation of NEMO as shared library
+## ---------------------------------------
+build: dirs PY_NEMO
+	@echo "      > Compilation successful"
+	@echo "   -------------------------------"
+
+$(NEMO_LIB): $(OBJ)
+	$(FC) -shared $(FFLAGS) -o $(LIB_DIR)/$@ $(OBJ_DIR)/nemo_mod.o $(OBJ_DIR)/nemo_c_interface.o $(USER_LIB)
+	@echo "      > Shared NEMO compiled"
+	@echo "   -------------------------------"
+
+%.o: $(SRC_DIR)/%.f90
+	$(FC) -fPIC $(FFLAGS) -c $< -o $(OBJ_DIR)/$@ -J $(INC_DIR) -I $(NEMO_INC_DIR) -I $(INC_DIR) $(USER_INC)
+
+
+## ---------------------------------------
+## Compilation of shared-NEMO Python layer
+## ---------------------------------------
+
+PY_NEMO: $(NEMO_LIB)
+	@echo "   >>> Compile Python layer"
+
+
+## ---------------------------------------
+## Cleaning
+## ---------------------------------------
+clean:
+	-rm -f $(ARCH)
+	-rm -rf $(LIB_DIR) $(OBJ_DIR) $(INC_DIR) $(PY_DIR) build	
