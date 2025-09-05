@@ -7,12 +7,12 @@ ARCH         := arch_nemo.mk
 
 NEMO_LIB     := libnemo.so
 
-SRC_DIR      := $(WRAPPER_HOME)/src/nemo_interface
-OBJ_DIR      := $(WRAPPER_HOME)/build/fortran
-INC_DIR      := $(WRAPPER_HOME)/build/include
-LIB_DIR      := $(WRAPPER_HOME)/build/lib
-PY_DIR       := $(WRAPPER_HOME)/build/python
-NEMO_INC_DIR := $(WRAPPER_HOME)/../inc
+export SRC_DIR      = $(WRAPPER_HOME)/src/nemo_interface
+export OBJ_DIR      = $(WRAPPER_HOME)/build/fortran
+export INC_DIR      = $(WRAPPER_HOME)/build/include
+export LIB_DIR      = $(WRAPPER_HOME)/build/lib
+export PY_DIR       = $(WRAPPER_HOME)/build/python
+export NEMO_INC_DIR = $(WRAPPER_HOME)/../inc
 
 OBJ = nemo_mod.o nemo_c_interface.o 
 
@@ -54,24 +54,23 @@ build: dirs PY_NEMO
 
 $(NEMO_LIB): $(OBJ)
 	$(FC) -shared $(FFLAGS) -o $(LIB_DIR)/$@ $(OBJ_DIR)/nemo_mod.o $(OBJ_DIR)/nemo_c_interface.o $(USER_LIB)
-	@echo "      > Shared NEMO compiled"
+	@echo "      > DONE shared NEMO"
 	@echo "   -------------------------------"
 
 %.o: $(SRC_DIR)/%.f90
-	$(FC) -fPIC $(FFLAGS) -c $< -o $(OBJ_DIR)/$@ -J $(INC_DIR) -I $(NEMO_INC_DIR) -I $(INC_DIR) $(USER_INC)
+	$(FC) $(FFLAGS) -c $< -o $(OBJ_DIR)/$@ -J $(INC_DIR) -I $(NEMO_INC_DIR) -I $(INC_DIR) $(USER_INC)
 
 
 ## ---------------------------------------
 ## Compilation of shared-NEMO Python layer
 ## ---------------------------------------
-
 PY_NEMO: $(NEMO_LIB)
 	@echo "   >>> Compile Python layer"
-
+	python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR)
 
 ## ---------------------------------------
 ## Cleaning
 ## ---------------------------------------
 clean:
-	-rm -f $(ARCH)
+	-rm -f $(ARCH) src/py_src/*.c 
 	-rm -rf $(LIB_DIR) $(OBJ_DIR) $(INC_DIR) $(PY_DIR) build	
