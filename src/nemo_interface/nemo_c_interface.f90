@@ -267,7 +267,7 @@ SUBROUTINE c_nemo_advance(kite,kite_start,pstp_c,ldiag_c) BIND(C)
       !
       ! Time loop
       istp = kite_start
-      iend = kite_start + kite
+      iend = kite_start + kite - 1
       !
       IF( .NOT.ln_diurnal_only ) THEN                 !==  Standard time-stepping  ==!
          !
