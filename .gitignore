@@ -4,6 +4,7 @@
 *.so
 *.a
 *.c
+*.egg-info
 
 # Executables
 *.exe
