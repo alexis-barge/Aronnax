@@ -7,7 +7,7 @@ ARCH         := arch_nemo.mk
 
 NEMO_LIB     := libnemo.so
 
-export SRC_DIR      = $(WRAPPER_HOME)/src/nemo_interface
+export SRC_DIR      = $(WRAPPER_HOME)/src/c_bind
 export OBJ_DIR      = $(WRAPPER_HOME)/build/fortran
 export INC_DIR      = $(WRAPPER_HOME)/build/include
 export LIB_DIR      = $(WRAPPER_HOME)/build/lib
@@ -16,7 +16,7 @@ export NEMO_INC_DIR = $(WRAPPER_HOME)/../inc
 export NEMO_OBJ_DIR = $(WRAPPER_HOME)/../obj
 
 NEMO_OBJ = $(wildcard $(NEMO_OBJ_DIR)/*.o)
-OBJ = nemo_mod.o nemo_c_interface.o 
+OBJ = nemo_mod.o nemo_c_bind.o 
 
 ###########################################
 ###########################################
@@ -31,9 +31,7 @@ all: $(ARCH)
 		$(MAKE) --no-print-directory build; \
 	fi
 
-build: dirs PY_NEMO
-	@echo "      > Compilation successful"
-	@echo "   -------------------------------"
+build: dirs $(NEMO_LIB)
 
 
 ## ---------------------------------------
@@ -66,10 +64,11 @@ $(NEMO_LIB): $(OBJ)
 ## ---------------------------------------
 ## Compilation of shared-NEMO Python layer
 ## ---------------------------------------
-PY_NEMO: $(NEMO_LIB)
+cython:
 	@echo "   >>> Compile Python layer"
-	python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR)
-
+	###python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR)
+	@echo "      > DONE Python layer"
+	@echo "   -------------------------------"
 
 ## ---------------------------------------
 ## Cleaning
