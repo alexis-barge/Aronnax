@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "Cython", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyNEMO"
+version = "0.1.0"
+description = "Python wrapper for NEMO ocean GCM"
+authors = [ { name="Alexis Barge", email="alexis.barge@proton.me" }, 
+	    { name = "Julien Le Sommer", email = "julien.lesommer@univ-grenoble-alpes.fr" },]
+readme = "README.md"
+##license = {file = "LICENSE"}
+
+keywords = ["NEMO","GCM","python","wrapper"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: None",
+    "Operating System :: OS Independent",
+]
+
+requires-python = ">=3.10"
+dependencies = [
+	"Cython>=3.0.8",
+	"numpy>=1.21.0",
+	"mpi4py>=3.1.5",
+]
+
+
+###[project.urls]
+###"Homepage" = "https://github.com/meom-group/eophis"
+###"Bug Tracker" = "https://github.com/meom-group/eophis/issues"
