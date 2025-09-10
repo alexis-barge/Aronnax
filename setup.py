@@ -15,12 +15,10 @@ class BuildExtWithMake(build_ext):
         # Compilation directory
         lib_dir = os.environ.get("LIB_DIR") or "build/lib"
         os.makedirs(lib_dir, exist_ok=True)
-        self.build_lib = lib_dir
 
         # Building directory
         temp_dir = os.environ.get("PY_DIR") or "build/python"
         os.makedirs(temp_dir, exist_ok=True)
-        self.build_temp = temp_dir
 
         # Compile libnemo.so with Makefile, then Cython wrapper
         subprocess.check_call(["make", f"LIB_DIR={lib_dir}"])
@@ -29,11 +27,11 @@ class BuildExtWithMake(build_ext):
 
 extensions = [
     Extension(
-        "nemo_py_bind",                       # fully qualified module name
-        sources=["src/py_bind/nemo_py_bind.pyx"],    # Cython source
-        libraries=["nemo"],                          # link against libnemo.so
+        "nemo_py_bind",                            # Python module name
+        sources=["src/py_bind/nemo_py_bind.pyx"],  # Cython source
+        libraries=["nemo"],                        # link libnemo.so
         library_dirs=["build/lib"],
-        runtime_library_dirs=["build_lib"],
+        runtime_library_dirs=["build/lib"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=["-O3", "-fPIC"],
         extra_link_args=["-Wl,-rpath,$ORIGIN"],
@@ -41,12 +39,14 @@ extensions = [
     )
 ]
 
+# Cython options
 cythonized_extensions = cythonize(
     extensions,
     language_level="3",
     build_dir="build/python",
 )
 
+# pyNEMO package
 setup(
     name="pyNEMO",
     version="0.1.0",

@@ -66,7 +66,7 @@ $(NEMO_LIB): $(OBJ)
 ## ---------------------------------------
 cython:
 	@echo "   >>> Compile Python layer"
-	###python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR)
+	python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR)
 	@echo "      > DONE Python layer"
 	@echo "   -------------------------------"
 
