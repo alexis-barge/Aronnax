@@ -5,13 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pyNEMO"
 version = "0.1.0"
-description = "Python wrapper for NEMO ocean GCM"
+description = "Python wrapper for the ocean GCM NEMO"
 authors = [ { name="Alexis Barge", email="alexis.barge@proton.me" }, 
 	    { name = "Julien Le Sommer", email = "julien.lesommer@univ-grenoble-alpes.fr" },]
 readme = "README.md"
 ##license = {file = "LICENSE"}
 
-keywords = ["NEMO","GCM","python","wrapper"]
+keywords = ["NEMO","GCM","python","wrapper","hybrid"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: None",
