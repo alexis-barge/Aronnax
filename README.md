@@ -1,5 +1,9 @@
 # pyNEMO
 
+```
+!! The project is currently at early development stage and may not work properly !!
+```
+
 **PyNEMO** is a Python wrapper for the ocean General Circulation Model NEMO v5.0.1 - configuration ORCA1.
 
 ### Prerequisites
@@ -56,7 +60,7 @@ pip install .
 
 #### Development installation
 
-pyNEMO can be compiled locally without installation in Python packages for development purposes:
+pyNEMO can be compiled locally with no installation in packages site for development purposes:
 
 ```bash
 cd pyNEMO
