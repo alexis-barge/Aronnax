@@ -62,17 +62,8 @@ $(NEMO_LIB): $(OBJ)
 
 
 ## ---------------------------------------
-## Compilation of shared-NEMO Python layer
-## ---------------------------------------
-cython:
-	@echo "   >>> Compile Python layer"
-	python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR)
-	@echo "      > DONE Python layer"
-	@echo "   -------------------------------"
-
-## ---------------------------------------
 ## Cleaning
 ## ---------------------------------------
 clean:
-	-rm -f $(ARCH) src/py_src/*.c 
+	-rm -f $(ARCH) src/*.so 
 	-rm -rf $(LIB_DIR) $(OBJ_DIR) $(INC_DIR) $(PY_DIR) build
