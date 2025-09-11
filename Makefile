@@ -61,9 +61,27 @@ $(NEMO_LIB): $(OBJ)
 	$(FC) $(FFLAGS) -c $< -o $(OBJ_DIR)/$@ -J $(INC_DIR) -I $(NEMO_INC_DIR) -I $(INC_DIR) $(USER_INC)
 
 
+## ---------------------------------------------------
+## Compilation of shared-NEMO Python layer in dev mode
+## ---------------------------------------------------
+dev:
+	@echo "   >>> Compile in dev mode"
+	python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR)
+	@echo "      > DONE dev compilation"
+	@echo "   -------------------------------"
+	@echo "      > Copy following lines in your Python script:"
+	@echo "import sys"
+	@echo "sys.path.insert(0,'$(LIB_DIR)/pyNEMO')"
+	@echo "from nemo_py_bind import *"
+	@echo "   -------------------------------"
+
+
 ## ---------------------------------------
 ## Cleaning
 ## ---------------------------------------
+veryclean: clean
+	pip uninstall pyNEMO -y
+
 clean:
-	-rm -f $(ARCH) src/*.so 
+	-rm -f $(ARCH) src/*.so *.sh 
 	-rm -rf $(LIB_DIR) $(OBJ_DIR) $(INC_DIR) $(PY_DIR) build

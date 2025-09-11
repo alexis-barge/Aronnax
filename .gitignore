@@ -9,7 +9,9 @@
 # Executables
 *.exe
 *.out
+*.sh
 
 # Others
+__pycache__
 build/
 *.mk
