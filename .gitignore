@@ -9,9 +9,12 @@
 # Executables
 *.exe
 *.out
-*.sh
+
+# Documentation
+docs/_build
 
 # Others
 __pycache__
 build/
 *.mk
+.DS_Store
