@@ -5,6 +5,7 @@
 *.a
 *.c
 *.egg-info
+*.ipynb_checkpoints
 
 # Executables
 *.exe
