@@ -32,6 +32,15 @@ If you have built something upon pyNEMO (or wish to):
 When creating a pull request, discussion will be open to decide in which branch your contributions should be merged. If your contribution implies new features, please provide testing procedures.
 
 
+### Branching strategy
+
+- **develop** is dedicated to code sources evolution and integration of new features
+- **doc** is dedicated to evolution and fixes of documentation, and repo markdown files (README, CONTRIBUTING…)
+- **hotfix** is dedicated for correction of minor bugs, it is kept close to *main* branch
+- **release** gathers modifications of other branches. It is dedicated to stabilization and beta testing
+- **main** freezes stable states of *release* branch for official package deployment
+
+
 ### Coding convention
 
 **c_bind sources - Fortran**
