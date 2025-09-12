@@ -66,3 +66,10 @@ pyNEMO can be compiled locally with no installation in packages site for develop
 cd pyNEMO
 make dev
 ```
+
+#### Clean up 
+
+```bash
+make clean      # remove compiled objects and build directories
+make veryclean  # clean and uninstall pyNEMO package
+```
