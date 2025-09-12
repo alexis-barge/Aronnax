@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ "CI_workflows" ]
+  pull_request:
+    branches: [ "main" , "release" ]
+
+permissions:
+  contents: write
+
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set environment variables
+      run: |
+        echo "HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+        echo "HOME_OASIS=$GITHUB_WORKSPACE/nemo_v5.0.1" >> $GITHUB_ENV
+
+    - name: Install pyNEMO
+      run: |
+        cd $HOME
+        pip install .
+
+    - name: Run pyNEMO unit tests
+      run: |
+        cd $HOME/tests/unit_tests
+        pytest
+
+    - name: Run operating tests
+      run: |
+        cd $HOME/tests/
+        ./run_all_tests.sh
