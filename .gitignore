@@ -18,4 +18,6 @@ docs/_build
 __pycache__
 build/
 *.mk
+*.swp
+*.swo
 .DS_Store

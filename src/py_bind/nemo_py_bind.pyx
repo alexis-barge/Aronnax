@@ -9,6 +9,7 @@ cimport numpy as np
 cdef extern void c_nemo_init(int *klocalcomm, int *kit000) nogil
 cdef extern void c_nemo_advance(int *kite, int *kite_start, float *pstp_c, int *ldiag_c) nogil
 cdef extern void c_nemo_finalization(int *kitend) nogil
+cdef extern void c_nemo_get(const char **cd_varname_c) nogil
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -48,6 +49,20 @@ def nemo_advance(ite,ite_start,stp,diag):
     # call
     with nogil:
         c_nemo_advance(&kite, &kite_start, &pstp_c, &ldiag_c)
+
+
+def nemo_get(varname):
+    # Check types 
+    if not isinstance(varname, (str)): 
+        raise TypeError(f"nemo_get: varname must be str, got {type(varname)}")
+
+    # convert
+    cdef bytes varname_tmp = varname.encode("utf-8")
+    cdef const char *cd_varname_c = varname_tmp
+    
+    # call
+    with nogil:
+        c_nemo_get(&cd_varname_c)
 
 
 def nemo_finalization(itend):
