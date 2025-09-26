@@ -16,7 +16,7 @@ export NEMO_INC_DIR = $(WRAPPER_HOME)/../inc
 export NEMO_OBJ_DIR = $(WRAPPER_HOME)/../obj
 
 NEMO_OBJ = $(wildcard $(NEMO_OBJ_DIR)/*.o)
-OBJ = nemo_mod.o nemo_c_bind.o 
+OBJ = utils.o nemo_mod.o nemo_c_bind.o 
 
 ###########################################
 ###########################################
