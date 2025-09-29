@@ -45,7 +45,7 @@ class NEMO:
 
     def finish(self):
         """ Finalization routines - terminates NEMO program. """
-        nemo_finalization(self.total_ite-1)
+        nemo_finalization()
         self.initialized = False
 
     def restart(self):
@@ -62,7 +62,13 @@ class NEMO:
 
     def advance(self, ite=1, step=0.0):
         """ Advance NEMO time loop. """
-        self.total_ite += ite
+        info = nemo_advance(self.total_ite, self.total_ite + ite - 1, 0.0)
         self.total_time += ite*step
-        nemo_advance(ite,self.total_ite,0.0,False)
+        self.total_ite += ite
+
+        # Check errors
+        if info /= 0:
+            self.finish()
+            if Paral.RANK == Paral.MASTER:
+                print(f"Simulation failed - check messages in ocean.output")
 
