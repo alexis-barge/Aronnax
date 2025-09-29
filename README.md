@@ -39,10 +39,10 @@ cat nemo_v5.0.1/arch/arch-NEMO.fcm
 
 ### 2. Install Python wrapper
 
-Once NEMO is compiled, go in `BLD` directory of your ORCA1 config:
+Once NEMO is compiled, go in the experiment directory of your ORCA1 config:
 
 ```bash
-cd nemo_v5.0.1/cfgs/<ORCA1-CONFIG>/BLD
+cd nemo_v5.0.1/cfgs/<ORCA1-CONFIG>
 ```
 
 Clone a copy of pyNEMO repository:

@@ -2,7 +2,7 @@
 # Makefile to build NEMO Python wrapper
 # =====================================
 WRAPPER_HOME := $(shell pwd)
-ARCH_FCM     := $(WRAPPER_HOME)/BLD/arch_nemo.fcm
+ARCH_FCM     := $(WRAPPER_HOME)/../BLD/arch_nemo.fcm
 ARCH         := arch_nemo.mk
 
 NEMO_LIB     := libnemo.so
@@ -12,8 +12,8 @@ export OBJ_DIR      = $(WRAPPER_HOME)/build/fortran
 export INC_DIR      = $(WRAPPER_HOME)/build/include
 export LIB_DIR      = $(WRAPPER_HOME)/build/lib
 export PY_DIR       = $(WRAPPER_HOME)/build/python
-export NEMO_INC_DIR = $(WRAPPER_HOME)/BLD/inc
-export NEMO_OBJ_DIR = $(WRAPPER_HOME)/BLD/obj
+export NEMO_INC_DIR = $(WRAPPER_HOME)/../BLD/inc
+export NEMO_OBJ_DIR = $(WRAPPER_HOME)/../BLD/obj
 
 NEMO_OBJ = $(wildcard $(NEMO_OBJ_DIR)/*.o)
 OBJ = utils.o nemo_api.o nemo_c_bind.o 
