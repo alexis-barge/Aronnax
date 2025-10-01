@@ -80,14 +80,14 @@ SUBROUTINE c_nemo_finalization() BIND(C)
 END SUBROUTINE c_nemo_finalization
 
 
-SUBROUTINE c_nemo_get(cd_varname_c) BIND(C)
+SUBROUTINE c_nemo_get_size(cd_varname_c,knx,kny,knz) BIND(C)
       !!----------------------------------------------------------------------
-      !!                     ***  ROUTINE c_nemo_get  ***
+      !!                     ***  FUNCTION c_nemo_geti_size  ***
       !!
-      !! ** Purpose :   C interface to get NEMO variables values
+      !! ** Purpose :   C interface to get NEMO array size
       !!----------------------------------------------------------------------
 
-      USE iso_c_binding, ONLY: c_ptr
+      USE iso_c_binding, ONLY: c_int, c_ptr
       USE nemo_api
       USE utils
 
@@ -95,15 +95,80 @@ SUBROUTINE c_nemo_get(cd_varname_c) BIND(C)
 
       !!----------------------------------------------------------------------
       ! I/O
-      TYPE(c_ptr), INTENT(IN) :: cd_varname_c
+      TYPE (c_ptr), INTENT(IN) :: cd_varname_c
+      INTEGER (c_int), INTENT(OUT) :: knx, kny, knz
       ! Local variables
       CHARACTER(len=:), ALLOCATABLE :: cd_varname_f
       !!----------------------------------------------------------------------
 
       ! Convert
       CALL c_string_to_fortran(cd_varname_c, cd_varname_f)
-      print*, "Received CHAR : ", cd_varname_f
 
       ! API
+      knx = jpi 
+      kny = jpj
+      knz = jpk
 
-END SUBROUTINE c_nemo_get
+END SUBROUTINE c_nemo_get_size
+
+
+SUBROUTINE c_nemo_get_val(cd_varname_c,knx,kny,knz,pval) BIND(C)
+      !!----------------------------------------------------------------------
+      !!                     ***  ROUTINE c_nemo_get  ***
+      !!
+      !! ** Purpose :   C interface to get NEMO variables values
+      !!----------------------------------------------------------------------
+
+      USE iso_c_binding, ONLY: c_ptr, c_double, c_int
+      USE nemo_api
+      USE utils
+
+      IMPLICIT NONE
+
+      !!----------------------------------------------------------------------
+      ! I/O
+      TYPE (c_ptr), INTENT(IN) :: cd_varname_c
+      INTEGER (c_int), INTENT(IN) :: knx, kny, knz
+      REAL (c_double), INTENT(OUT) :: pval(knx,kny,knz)
+      ! Local variables
+      CHARACTER(len=:), ALLOCATABLE :: cd_varname_f
+      !!----------------------------------------------------------------------
+
+      ! Convert
+      CALL c_string_to_fortran(cd_varname_c, cd_varname_f)
+
+      ! API
+      pval(:,:,:) = REAL( ts(:,:,:,1,1), kind=c_double)
+
+END SUBROUTINE c_nemo_get_val
+
+
+SUBROUTINE c_nemo_set_val(cd_varname_c,knx,kny,knz,pval) BIND(C)
+      !!----------------------------------------------------------------------
+      !!                     ***  ROUTINE c_nemo_get  ***
+      !!
+      !! ** Purpose :   C interface to set NEMO variables values
+      !!----------------------------------------------------------------------
+
+      USE iso_c_binding, ONLY: c_ptr, c_double, c_int
+      USE nemo_api
+      USE utils
+
+      IMPLICIT NONE
+
+      !!----------------------------------------------------------------------
+      ! I/O
+      TYPE (c_ptr), INTENT(IN) :: cd_varname_c
+      INTEGER (c_int), INTENT(IN) :: knx, kny, knz
+      REAL (c_double), INTENT(IN) :: pval(knx,kny,knz)
+      ! Local variables
+      CHARACTER(len=:), ALLOCATABLE :: cd_varname_f
+      !!----------------------------------------------------------------------
+
+      ! Convert
+      CALL c_string_to_fortran(cd_varname_c, cd_varname_f)
+
+      ! API
+      ts(:,:,:,1,1) = REAL( pval(:,:,:), kind=wp )
+
+END SUBROUTINE c_nemo_set_val

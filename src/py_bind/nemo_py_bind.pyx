@@ -3,12 +3,13 @@
 # cython: boundscheck=True, wraparound=False
 
 import numpy as np
-cimport numpy as np
 
 """ Import Fortran interface - nogil since Fortran does not manipulate Python objects """
 cdef extern void c_nemo_init(int *klocalcomm, int *kit000) nogil
-cdef extern void c_nemo_advance(int *kite_start, int *kite_end, float *pstp_c, int *kinfo) nogil
-cdef extern void c_nemo_get(const char **cd_varname_c) nogil
+cdef extern void c_nemo_advance(int *kite_start, int *kite_end, float *pstp_c ,int *kinfo) nogil
+cdef extern void c_nemo_get_size(const char **cd_varname_c, int *knx, int *kny, int *knz) nogil
+cdef extern void c_nemo_get_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval) nogil
+cdef extern void c_nemo_set_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval) nogil
 cdef extern void c_nemo_finalization() nogil
 
 # --------------------------------------------------------------------------------------------- #
@@ -51,18 +52,49 @@ def nemo_advance(ite_start,ite_end,stp):
     return kinfo
 
 
-def nemo_get(varname):
+def nemo_get_val(varname):
     # Check types 
     if not isinstance(varname, (str)): 
-        raise TypeError(f"nemo_get: varname must be str, got {type(varname)}")
+        raise TypeError(f"nemo_get_val: varname must be str, got {type(varname)}")
 
     # convert
     cdef bytes varname_tmp = varname.encode("utf-8")
     cdef const char *cd_varname_c = varname_tmp
-    
+
+    # empty array
+    cdef int nx, ny, nz
+    c_nemo_get_size(&cd_varname_c,&nx,&ny,&nz)
+    cdef double[:,:,:] pval = np.empty( (nx,ny,nz) , dtype=np.float64, order="F")
+
     # call
     with nogil:
-        c_nemo_get(&cd_varname_c)
+        c_nemo_get_val(&cd_varname_c,&nx,&ny,&nz,&pval[0,0,0])
+
+    return pval.base
+
+
+def nemo_set_val(varname,val):
+    # Check types 
+    if not isinstance(varname, (str)): 
+        raise TypeError(f"nemo_set_val: varname must be str, got {type(varname)}")
+    if not isinstance(val, (np.ndarray)): 
+        raise TypeError(f"nemo_set_val: val must be array, got {type(val)}")
+
+    # Convert
+    cdef bytes varname_tmp = varname.encode("utf-8")
+    cdef const char *cd_varname_c = varname_tmp
+    cdef double [:,:,:] pval = np.array( val, dtype=np.float64)
+
+    # Check size
+    cdef int nx, ny, nz
+    c_nemo_get_size(&cd_varname_c,&nx,&ny,&nz)
+
+    if val.shape != (nx,ny,nz):
+        raise TypeError(f"nemo_set_val: array size {val.shape} to set does not match {varname} NEMO size")
+
+    # call
+    with nogil:
+        c_nemo_set_val(&cd_varname_c,&nx,&ny,&nz,&pval[0,0,0])
 
 
 def nemo_finalization():

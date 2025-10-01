@@ -22,6 +22,7 @@ class NEMO:
             cls._instance.initialized = False
         return cls._instance
 
+
     def __init__(self, total_ite=0, total_time=0.0, config='ORCA1'):
         """ Starts NEMO, skip if already. """
         if not self.initialized:
@@ -32,10 +33,13 @@ class NEMO:
 
             # Start NEMO
             self.total_ite = nemo_init(Paral.GLOBAL_COMM.py2f())
+            self.sizes = get_nemo_size()
+
 
     def is_running(self):
         """ Is NENO program currently running. """
         return self.initialized
+
 
     def __str__(self):
         if Paral.RANK == Paral.MASTER:
@@ -43,10 +47,12 @@ class NEMO:
         else:
             return f""
 
+
     def finish(self):
         """ Finalization routines - terminates NEMO program. """
         nemo_finalization()
         self.initialized = False
+
 
     def restart(self):
         # Get required variables for restart
@@ -71,4 +77,18 @@ class NEMO:
             self.finish()
             if Paral.RANK == Paral.MASTER:
                 print(f"Simulation failed - check messages in ocean.output")
+        else:
+            if Paral.RANK == Paral.MASTER:
+                print(f"Time advancement reached iteration: {self.total_ite} and total simulation time: {self.total_time}")
 
+
+    def get(self,varname):
+        if Paral.RANK == Paral.MASTER:
+            print(f"Get {varname} at {self}")
+        return nemo_get_val(varname)
+
+
+    def set(self,varname,val):
+        if Paral.RANK == Paral.MASTER:
+            print(f"Set {varname} at {self}")
+        nemo_set_val(varname,val)
