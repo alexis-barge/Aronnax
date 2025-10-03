@@ -58,7 +58,7 @@ def nemo_get_val(varname):
         raise TypeError(f"nemo_get_val: varname must be str, got {type(varname)}")
 
     # convert
-    cdef bytes varname_tmp = varname.encode("utf-8")
+    cdef bytes varname_tmp = varname.lower().encode("utf-8")
     cdef const char *cd_varname_c = varname_tmp
 
     # empty array
@@ -81,7 +81,7 @@ def nemo_set_val(varname,val):
         raise TypeError(f"nemo_set_val: val must be array, got {type(val)}")
 
     # Convert
-    cdef bytes varname_tmp = varname.encode("utf-8")
+    cdef bytes varname_tmp = varname.lower().encode("utf-8")
     cdef const char *cd_varname_c = varname_tmp
     cdef double [:,:,:] pval = np.array( val, dtype=np.float64)
 

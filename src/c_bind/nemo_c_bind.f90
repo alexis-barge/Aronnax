@@ -104,10 +104,18 @@ SUBROUTINE c_nemo_get_size(cd_varname_c,knx,kny,knz) BIND(C)
       ! Convert
       CALL c_string_to_fortran(cd_varname_c, cd_varname_f)
 
-      ! API
-      knx = jpi 
+      ! Get size
+      knx = jpi
       kny = jpj
-      knz = jpk
+      SELECT CASE (cd_varname_f)
+
+          CASE ("u","v","w","t","s","rhop")
+             knz = jpk
+
+          CASE ("ssh","e1t","e2t","e1u","e2u","e1v","e2v","e1f","e2f")
+             knz = 1
+
+       END SELECT
 
 END SUBROUTINE c_nemo_get_size
 
@@ -138,7 +146,54 @@ SUBROUTINE c_nemo_get_val(cd_varname_c,knx,kny,knz,pval) BIND(C)
       CALL c_string_to_fortran(cd_varname_c, cd_varname_f)
 
       ! API
-      pval(:,:,:) = REAL( ts(:,:,:,1,1), kind=c_double)
+      SELECT CASE (cd_varname_f)
+
+          CASE ("t") 
+             pval(:,:,:) = REAL( ts(:,:,:,jp_tem,Nnn), kind=c_double)
+
+          CASE ("s")
+             pval(:,:,:) = REAL( ts(:,:,:,jp_sal,Nnn), kind=c_double)
+
+          CASE ("u")
+             pval(:,:,:) = REAL( uu(:,:,:,Nnn), kind=c_double)
+
+          CASE ("v")
+             pval(:,:,:) = REAL( vv(:,:,:,Nnn), kind=c_double)
+
+          CASE ("w")
+             pval(:,:,:) = REAL( ww(:,:,:), kind=c_double)
+
+          CASE ("ssh")
+             pval(:,:,knz) = REAL( ssh(:,:,Nnn), kind=c_double)
+
+          CASE ("e1t")
+             pval(:,:,knz) = REAL( e1t(:,:), kind=c_double)
+
+          CASE ("e2t")
+             pval(:,:,knz) = REAL( e2t(:,:), kind=c_double)
+
+          CASE ("e1u")
+             pval(:,:,knz) = REAL( e1u(:,:), kind=c_double)
+
+          CASE ("e2u")
+             pval(:,:,knz) = REAL( e2u(:,:), kind=c_double)
+
+          CASE ("e1v")
+             pval(:,:,knz) = REAL( e1v(:,:), kind=c_double)
+
+          CASE ("e2v")
+             pval(:,:,knz) = REAL( e2v(:,:), kind=c_double)
+
+          CASE ("e1f")
+             pval(:,:,knz) = REAL( e1f(:,:), kind=c_double)
+
+          CASE ("e2f")
+             pval(:,:,knz) = REAL( e2f(:,:), kind=c_double)
+
+          CASE DEFAULT
+             pval(:,:,:) = 0.0
+
+      END SELECT
 
 END SUBROUTINE c_nemo_get_val
 
@@ -169,6 +224,50 @@ SUBROUTINE c_nemo_set_val(cd_varname_c,knx,kny,knz,pval) BIND(C)
       CALL c_string_to_fortran(cd_varname_c, cd_varname_f)
 
       ! API
-      ts(:,:,:,1,1) = REAL( pval(:,:,:), kind=wp )
+      SELECT CASE (cd_varname_f)
+
+          CASE ("t") 
+             ts(:,:,:,jp_tem,Nnn) = REAL( pval(:,:,:), kind=wp )
+
+          CASE ("s") 
+             ts(:,:,:,jp_sal,Nnn) = REAL( pval(:,:,:), kind=wp )
+
+          CASE ("u") 
+             uu(:,:,:,Nnn) = REAL( pval(:,:,:), kind=wp )
+
+          CASE ("v") 
+             vv(:,:,:,Nnn) = REAL( pval(:,:,:), kind=wp )
+
+          CASE ("w") 
+             ww(:,:,:) = REAL( pval(:,:,:), kind=wp )
+
+          CASE ("ssh") 
+             ssh(:,:,Nnn) = REAL( pval(:,:,knz), kind=wp )
+
+          CASE ("e1t") 
+             e1t(:,:) = REAL( pval(:,:,knz), kind=wp )
+
+          CASE ("e2t") 
+             e2t(:,:) = REAL( pval(:,:,knz), kind=wp )
+
+          CASE ("e1u") 
+             e1u(:,:) = REAL( pval(:,:,knz), kind=wp )
+
+          CASE ("e2u") 
+             e2u(:,:) = REAL( pval(:,:,knz), kind=wp )
+
+          CASE ("e1v") 
+             e1v(:,:) = REAL( pval(:,:,knz), kind=wp )
+
+          CASE ("e2v") 
+             e2v(:,:) = REAL( pval(:,:,knz), kind=wp )
+
+          CASE ("e1f") 
+             e1f(:,:) = REAL( pval(:,:,knz), kind=wp )
+
+          CASE ("e2f") 
+             e2f(:,:) = REAL( pval(:,:,knz), kind=wp )
+
+      END SELECT
 
 END SUBROUTINE c_nemo_set_val
