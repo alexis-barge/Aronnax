@@ -16,7 +16,7 @@ export NEMO_INC_DIR = $(WRAPPER_HOME)/../BLD/inc
 export NEMO_OBJ_DIR = $(WRAPPER_HOME)/../BLD/obj
 
 NEMO_OBJ = $(wildcard $(NEMO_OBJ_DIR)/*.o)
-OBJ = utils.o nemo_api.o nemo_c_bind.o 
+OBJ = nemo_api.o utils.o nemo_c_bind.o 
 
 ###########################################
 ###########################################
@@ -58,7 +58,7 @@ $(NEMO_LIB): $(OBJ)
 	@echo "   -------------------------------"
 
 %.o: $(SRC_DIR)/%.f90
-	$(FC) $(FFLAGS) -c $< -o $(OBJ_DIR)/$@ -J $(INC_DIR) -I $(NEMO_INC_DIR) -I $(INC_DIR) $(USER_INC)
+	$(FC) -$(CPP) $(FFLAGS) -c $< -o $(OBJ_DIR)/$@ -J $(INC_DIR) -I $(NEMO_INC_DIR) -I $(INC_DIR) $(USER_INC)
 
 
 ## ---------------------------------------------------
@@ -68,7 +68,6 @@ dev:
 	@echo "   >>> Compile in dev mode"
 	python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR)
 	@echo "      > DONE dev compilation"
-	@echo "   -------------------------------"
 	@echo "      > Copy following lines in your Python script:"
 	@echo "import sys"
 	@echo "sys.path.insert(0,'$(LIB_DIR)/pyNEMO')"
