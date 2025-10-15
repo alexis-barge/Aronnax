@@ -1,7 +1,7 @@
 # pyNEMO modules
 from .worker import Paral
 # NEMO interface
-from nemo_py_bind import *
+from .nemo_py_bind import *
 
 __all__ = ['NEMO']
 
@@ -16,7 +16,7 @@ class NEMO:
     """
     _instance = None
 
-    def __new__(cls,*args,**kwargs)
+    def __new__(cls,*args,**kwargs):
         if not cls._instance:
             cls._instance = super(NEMO, cls).__new__(cls)
             cls._instance.initialized = False
@@ -32,12 +32,11 @@ class NEMO:
             self.config = config
 
             # Start NEMO
-            self.total_ite = nemo_init(Paral.GLOBAL_COMM.py2f())
-            self.sizes = get_nemo_size()
+            self.total_ite = nemo_init(Paral.NEMO_COMM.py2f())
 
 
     def is_running(self):
-        """ Is NENO program currently running. """
+        """ Is NEMO program currently running. """
         return self.initialized
 
 
@@ -54,11 +53,11 @@ class NEMO:
         self.initialized = False
 
 
-    def restart(self):
+    #def restart(self):
         # Get required variables for restart
         # ...
         # Terminate current NEMO execution
-        self.finish()
+        #self.finish()
         # 
         # Restart nemo with new inputs
         # self.seg += 1
@@ -73,7 +72,7 @@ class NEMO:
         self.total_ite += ite
 
         # Check errors
-        if info /= 0:
+        if info != 0:
             self.finish()
             if Paral.RANK == Paral.MASTER:
                 print(f"Simulation failed - check messages in ocean.output")

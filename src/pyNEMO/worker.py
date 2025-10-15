@@ -20,6 +20,6 @@ class Paral:
         Output rank
 
     """
-    GLOBAL_COMM = MPI.COMM_WORLD
-    GLOBAL_RANK = GLOBAL_COMM.Get_rank()
+    NEMO_COMM = MPI.COMM_WORLD
+    RANK = NEMO_COMM.Get_rank()
     MASTER = 0
