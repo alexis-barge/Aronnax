@@ -1,10 +1,13 @@
-# pyNEMO
+# Nautilus
+
+**!! The project is currently at early development stage and may not work properly !!**
 
 ```
-!! The project is currently at early development stage and may not work properly !!
+Just as the legendary submarine Nautilus carried Captain Nemo through the uncharted depths of the oceans,
+this project carries the NEMO ocean model into the world of Python.
 ```
 
-**PyNEMO** is a Python wrapper for the ocean General Circulation Model NEMO v5.0.1 - configuration ORCA1.
+**Nautilus** is Python wrapper for the ocean General Circulation Model NEMO v5.0.1 - configuration ORCA1. It provides an interface to progress the Fortran main time loop, and get or set variables used by the Fortran to or from the Python environment.
 
 ### Prerequisites
 - NEMO [v5.0.1](https://forge.nemo-ocean.eu/nemo/nemo/-/releases)
@@ -39,31 +42,31 @@ cat nemo_v5.0.1/arch/arch-NEMO.fcm
 
 ### 2. Install Python wrapper
 
-Once NEMO is compiled, go in `BLD` directory of your ORCA1 config:
+Once NEMO is compiled, go in the ORCA1 config directory:
 
 ```bash
-cd nemo_v5.0.1/cfgs/<ORCA1-CONFIG>/BLD
+cd nemo_v5.0.1/cfgs/<ORCA1-CONFIG>
 ```
 
-Clone a copy of pyNEMO repository:
+Clone a copy of the Nautilus repository:
 
 ```bash
-git clone https://github.com/alexis-barge/pyNEMO.git
+git clone https://github.com/alexis-barge/Nautilus.git
 ```
 
 Install package:
 
 ```bash
-cd pyNEMO
+cd Nautilus
 pip install .
 ```
 
 #### Development installation
 
-pyNEMO can be compiled locally with no installation in packages site for development purposes:
+Nautilus can be compiled locally with no installation in packages site for development purposes:
 
 ```bash
-cd pyNEMO
+cd Nautilus
 make dev
 ```
 
@@ -71,5 +74,5 @@ make dev
 
 ```bash
 make clean      # remove compiled objects and build directories
-make veryclean  # clean and uninstall pyNEMO package
+make veryclean  # clean and uninstall Nautilus package
 ```
