@@ -30,12 +30,12 @@ jobs:
         echo "HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
         echo "HOME_OASIS=$GITHUB_WORKSPACE/nemo_v5.0.1" >> $GITHUB_ENV
 
-    - name: Install pyNEMO
+    - name: Install Nautilus
       run: |
         cd $HOME
         pip install .
 
-    - name: Run pyNEMO unit tests
+    - name: Run Nautilus unit tests
       run: |
         cd $HOME/tests/unit_tests
         pytest

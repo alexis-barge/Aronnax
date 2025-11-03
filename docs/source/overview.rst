@@ -1,5 +1,5 @@
-pyNEMO
-======
+Nautilus
+========
 
 .. toctree::
     :maxdepth: 0

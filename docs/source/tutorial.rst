@@ -1,5 +1,5 @@
-pyNEMO Tutorial
-===============
+Nautilus Tutorial
+=================
 
 .. toctree::
    :maxdepth: 2

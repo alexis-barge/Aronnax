@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: pyNEMO
+title: Nautilus
 message: >-
   If you use this software, please cite it using the
   metadata from this file.
@@ -20,13 +20,13 @@ authors:
 identifiers:
 #  - type: doi 
 #    value: 
-    description: URL of pyNEMO version x.x.x
+    description: URL of Nautilus version x.x.x
   - type: url
     value: 'https://zenodo.org/records/14515373'
     description: NEMO heritage link
-repository-code: 'https://github.com/alexis-barge/pyNEMO'
+repository-code: 'https://github.com/alexis-barge/Nautilus'
 abstract: >-
-  pyNEMO is a Python wrapper of the ocean General Circulation 
+  Nautilus is a Python wrapper of the ocean General Circulation 
   Model NEMO, version 5.0.1, for the ORCA1 configuration.
 keywords:
   - Python

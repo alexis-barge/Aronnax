@@ -71,7 +71,7 @@ dev:
 	@echo "   -------------------------------"
 	@echo "      > Copy following lines in your Python script:"
 	@echo "import sys"
-	@echo "sys.path.insert(0,'$(LIB_DIR)/pyNEMO')"
+	@echo "sys.path.insert(0,'$(LIB_DIR)/Nautilus')"
 	@echo "from nemo_py_bind import *"
 	@echo "   -------------------------------"
 
@@ -80,7 +80,7 @@ dev:
 ## Cleaning
 ## ---------------------------------------
 veryclean: clean
-	pip uninstall pyNEMO -y
+	pip uninstall Nautilus -y
 
 clean:
 	-rm -f $(ARCH) src/*.so *.sh 

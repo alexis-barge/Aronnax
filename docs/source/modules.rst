@@ -1,7 +1,7 @@
-pyNEMO
-======
+Nautilus
+========
 
 .. toctree::
    :maxdepth: 4
 
-   src/pyNEMO
+   src/Nautilus

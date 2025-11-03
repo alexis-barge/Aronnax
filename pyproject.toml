@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "pyNEMO"
-version = "0.1.0"
+name = "Nautilus"
+version = "0.0.1"
 description = "Python wrapper for the ocean GCM NEMO"
 authors = [ { name="Alexis Barge", email="alexis.barge@proton.me" }, 
 	    { name = "Julien Le Sommer", email = "julien.lesommer@univ-grenoble-alpes.fr" },]
@@ -29,5 +29,5 @@ dependencies = [
 
 
 [project.urls]
-"Homepage" = "https://github.com/alexis-barge/pyNEMO"
-"Bug Tracker" = "https://github.com/alexis-barge/pyNEMO/issues"
+"Homepage" = "https://github.com/alexis-barge/Nautilus"
+"Bug Tracker" = "https://github.com/alexis-barge/Nautilus/issues"

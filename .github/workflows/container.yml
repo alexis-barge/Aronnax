@@ -37,10 +37,10 @@ jobs:
 
       - name: Build AMD64 image
         run: |
-          apptainer build pynemo_v${VER}_amd64.sif $HOME_DEF/apptainer_pynemo.def
+          apptainer build nautilus_v${VER}_amd64.sif $HOME_DEF/apptainer_nautilus.def
 
       - name: Upload AMD64 Image as GitHub Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pynemo_v${{ env.VER }}_amd64
-          path: ./pynemo_v${{ env.VER }}_amd64.sif
+          name: nautilus_v${{ env.VER }}_amd64
+          path: ./nautilus_v${{ env.VER }}_amd64.sif
