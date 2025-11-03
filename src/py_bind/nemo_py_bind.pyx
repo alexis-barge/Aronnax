@@ -3,12 +3,14 @@
 # cython: boundscheck=True, wraparound=False
 
 import numpy as np
-cimport numpy as np
 
 """ Import Fortran interface - nogil since Fortran does not manipulate Python objects """
 cdef extern void c_nemo_init(int *klocalcomm, int *kit000) nogil
-cdef extern void c_nemo_advance(int *kite, int *kite_start, float *pstp_c, int *ldiag_c) nogil
-cdef extern void c_nemo_finalization(int *kitend) nogil
+cdef extern void c_nemo_advance(int *kite_start, int *kite_end, float *pstp_c ,int *kinfo) nogil
+cdef extern void c_nemo_get_size(const char **cd_varname_c, int *knx, int *kny, int *knz) nogil
+cdef extern void c_nemo_get_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval) nogil
+cdef extern void c_nemo_set_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval) nogil
+cdef extern void c_nemo_finalization() nogil
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -28,36 +30,74 @@ def nemo_init(localcomm):
     return kit000 
 
 
-def nemo_advance(ite,ite_start,stp,diag):
+def nemo_advance(ite_start,ite_end,stp):
     # Check types
-    if not isinstance(ite, (int,np.integer)):
-        raise TypeError(f"nemo_advance: ite must be int, got {type(ite)}")
     if not isinstance(ite_start, (int,np.integer)):
         raise TypeError(f"nemo_advance: ite_start must be int, got {type(ite_start)}")
+    if not isinstance(ite_end, (int,np.integer)):
+        raise TypeError(f"nemo_advance: ite_end must be int, got {type(ite_end)}")
     if not isinstance(stp, (float,np.floating)):
         raise TypeError(f"nemo_advance: stp must be float, got {type(stp)}")
-    if not isinstance(diag, (bool,np.bool_)):
-        raise TypeError(f"nemo_advance: diag must be bool, got {type(diag)}")
 
     # convert
-    cdef int kite = ite
-    cdef int kite_start = ite_start 
+    cdef int kite_start = ite_start
+    cdef int kite_end = ite_end 
     cdef float pstp_c = stp
-    cdef int ldiag_c = diag
+    cdef int kinfo = 0
 
     # call
     with nogil:
-        c_nemo_advance(&kite, &kite_start, &pstp_c, &ldiag_c)
+        c_nemo_advance(&kite_start, &kite_end, &pstp_c, &kinfo)
+
+    return kinfo
 
 
-def nemo_finalization(itend):
-    # Check types
-    if not isinstance(itend, (int,np.integer)):
-        raise TypeError(f"nemo_finalization: itend must be int, got {type(itend)}")
+def nemo_get_val(varname):
+    # Check types 
+    if not isinstance(varname, (str)): 
+        raise TypeError(f"nemo_get_val: varname must be str, got {type(varname)}")
 
     # convert
-    cdef int kitend = itend
+    cdef bytes varname_tmp = varname.lower().encode("utf-8")
+    cdef const char *cd_varname_c = varname_tmp
+
+    # empty array
+    cdef int nx, ny, nz
+    c_nemo_get_size(&cd_varname_c,&nx,&ny,&nz)
+    cdef double[:,:,:] pval = np.empty( (nx,ny,nz) , dtype=np.float64, order="F")
 
     # call
     with nogil:
-        c_nemo_finalization(&kitend)
+        c_nemo_get_val(&cd_varname_c,&nx,&ny,&nz,&pval[0,0,0])
+
+    return pval.base
+
+
+def nemo_set_val(varname,val):
+    # Check types 
+    if not isinstance(varname, (str)): 
+        raise TypeError(f"nemo_set_val: varname must be str, got {type(varname)}")
+    if not isinstance(val, (np.ndarray)): 
+        raise TypeError(f"nemo_set_val: val must be array, got {type(val)}")
+
+    # Convert
+    cdef bytes varname_tmp = varname.lower().encode("utf-8")
+    cdef const char *cd_varname_c = varname_tmp
+    cdef double [:,:,:] pval = np.array( val, dtype=np.float64)
+
+    # Check size
+    cdef int nx, ny, nz
+    c_nemo_get_size(&cd_varname_c,&nx,&ny,&nz)
+
+    if val.shape != (nx,ny,nz):
+        raise TypeError(f"nemo_set_val: array size {val.shape} to set does not match {varname} NEMO size")
+
+    # call
+    with nogil:
+        c_nemo_set_val(&cd_varname_c,&nx,&ny,&nz,&pval[0,0,0])
+
+
+def nemo_finalization():
+    # call
+    with nogil:
+        c_nemo_finalization()

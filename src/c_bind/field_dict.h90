@@ -1,0 +1,31 @@
+#define time    1
+#define notime  0
+
+! ================================
+!  Ocean Physics : time dependent
+! ================================
+field( "t"   , ts(:,:,:,jp_tem,:), time )
+field( "s"   , ts(:,:,:,jp_sal,:), time )
+field( "u"   , uu,  time )
+field( "v"   , vv,  time )
+field( "ssh" , ssh, time )
+
+
+! ==================================
+!  Ocean Physics : time independent
+! ==================================
+field( "w"   , ww  , notime )
+field( "hdiv", hdiv, notime )
+
+
+! ==============================
+! Metrics : time dependent
+! ==============================
+
+
+! ==============================
+! Metrics : time independent
+! ==============================
+field( "glamt" , glamt , notime )
+
+
