@@ -70,7 +70,7 @@ dev:
 	@echo "      > DONE dev compilation"
 	@echo "      > Copy following lines in your Python script:"
 	@echo "import sys"
-	@echo "sys.path.insert(0,'$(LIB_DIR)/Nautilus')"
+	@echo "sys.path.insert(0,'$(LIB_DIR)/Aronnax')"
 	@echo "from nemo_py_bind import *"
 	@echo "   -------------------------------"
 
@@ -79,7 +79,7 @@ dev:
 ## Cleaning
 ## ---------------------------------------
 veryclean: clean
-	pip uninstall Nautilus -y
+	pip uninstall Aronnax -y
 
 clean:
 	-rm -f $(ARCH) src/*.so *.sh 

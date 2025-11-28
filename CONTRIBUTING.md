@@ -10,18 +10,18 @@ Everyone participating in the Eophis project is expected to treat other people w
 
 ## Bug reports and feature requests
 
-For bug reports, feature requests, and suggestions, please [open an issue](https://github.com/alexis-barge/Nautilus/issues).
+For bug reports, feature requests, and suggestions, please [open an issue](https://github.com/alexis-barge/Aronnax/issues).
 
 For bugs, please also provide:
 
 - your operating system name and version
-- Nautilus and NEMO version
+- Aronnax and NEMO version
 - Self-contained code snippet to reproduce the bug
 
 
 ## Developer's guide
 
-If you have built something upon Nautilus (or wish to):
+If you have built something upon Aronnax (or wish to):
 
 1. Fork the repository on GitHub
 2. Clone your fork locally
@@ -34,7 +34,7 @@ When creating a pull request, discussion will be open to decide in which branch 
 
 ### Branching strategy
 
-- Nautilus releases are phased with NEMO versions. 
+- Aronnax releases are phased with NEMO versions. 
 - Each release has a dedicated branch created from **main**, and named after the NEMO version with which it is phased. Those are dedicated for bugfixes and stabilization.
 - **main** is dedicated to any development not related to phasing.
 
@@ -46,7 +46,7 @@ When creating a pull request, discussion will be open to decide in which branch 
 Modified and additional NEMO sources with C-exposed functions. The philosophy is to call isolate parts of NEMO sources using simple incoming instructions. 
 The sources can be modified to be split up, called in a different order, repeated, given overriding instructions or return informations about NEMO internal state. 
 However, they should not be modified in a way that makes NEMO perform tasks it was not originally designed to handle. 
-Unusual or exotic behavior should instead be managed by the higher level Nautilus module. 
+Unusual or exotic behavior should instead be managed by the higher level Aronnax module. 
 
 Coding C-binded sources must follow conventions described in section *G. Coding Rules* of the [NEMO book](https://zenodo.org/records/8167700).
 
@@ -56,9 +56,9 @@ Coding C-binded sources must follow conventions described in section *G. Coding 
 Cython sources only aim to wrapp C-exposed Fortran functions in Python. No convention here, reduce coding for converting variables and calling Fortran sources.
 
 
-**Nautilus sources - Python**
+**Aronnax sources - Python**
 
-Nautilus provides an intuitive API of the Python wrapper. It follows [PEP 8 coding convention](https://peps.python.org/pep-0008/). Here are some additional guidelines:
+Aronnax provides an intuitive API of the Python wrapper. It follows [PEP 8 coding convention](https://peps.python.org/pep-0008/). Here are some additional guidelines:
 
 - Avoid obscure or too long variable names
 - Use 4-space indentation
@@ -68,5 +68,5 @@ Nautilus provides an intuitive API of the Python wrapper. It follows [PEP 8 codi
 Module structure:
 
 - Add module header with short description of the module, License and copyright
-- When importing packages, distinguish Nautilus module and external packages
+- When importing packages, distinguish Aronnax module and external packages
 - Define exactly what should be imported from the module with ``__all__``, even to import everything or nothing

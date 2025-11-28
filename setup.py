@@ -12,7 +12,7 @@ class BuildExtWithMake(build_ext):
     """
     Custom build_ext:
     - compile libnemo.so with Makefile
-    - copy libnemo.so into the *build/lib*/Nautilus/ folder (not src/)
+    - copy libnemo.so into the *build/lib*/Aronnax/ folder (not src/)
     - then build the Cython extension
     """
     def run(self):
@@ -26,16 +26,16 @@ class BuildExtWithMake(build_ext):
         # Compile Cython wrapper
         super().run()
 
-        # Add libnemo.so in Nautilus package
-        build_Nautilus_dir = os.path.join(self.build_lib, "Nautilus")
-        os.makedirs(build_Nautilus_dir, exist_ok=True)
-        shutil.copy2(os.path.join(lib_dir, "libnemo.so"), build_Nautilus_dir)
+        # Add libnemo.so in Aronnax package
+        build_Aronnax_dir = os.path.join(self.build_lib, "Aronnax")
+        os.makedirs(build_Aronnax_dir, exist_ok=True)
+        shutil.copy2(os.path.join(lib_dir, "libnemo.so"), build_Aronnax_dir)
 
 
 # Cython compilation
 extensions = [
     Extension(
-        "Nautilus.nemo_py_bind",                     
+        "Aronnax.nemo_py_bind",                     
         sources=["src/py_bind/nemo_py_bind.pyx"],  
         libraries=["nemo"],                        
         library_dirs=["build/lib"],                
@@ -56,14 +56,14 @@ cythonized_extensions = cythonize(
 
 # pyNENO package (include Cython wrapper and shared-NEMO)
 setup(
-    name="Nautilus",
+    name="Aronnax",
     version="0.1.0",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     ext_modules=cythonized_extensions,
     cmdclass={"build_ext": BuildExtWithMake,},
     options={"egg_info": {"egg_base": "build/python"}},
-    package_data={"Nautilus": ["*.so"]},
+    package_data={"Aronnax": ["*.so"]},
     include_package_data=True,
 )
 

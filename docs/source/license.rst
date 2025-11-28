@@ -1,5 +1,5 @@
-Nautilus License
-================
+Aronnax License
+===============
 
 .. include:: ../../LICENSE
    :parser: myst_parser.sphinx_

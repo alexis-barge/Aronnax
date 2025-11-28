@@ -1,5 +1,5 @@
-Nautilus Tutorial
-=================
+Aronnax Tutorial
+================
 
 .. toctree::
    :maxdepth: 2

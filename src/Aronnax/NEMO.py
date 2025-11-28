@@ -1,4 +1,4 @@
-# Nautilus modules
+# Aronnax modules
 from .worker import Paral
 # NEMO interface
 from .nemo_py_bind import *

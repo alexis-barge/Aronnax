@@ -1,7 +1,7 @@
-Nautilus
-========
+Aronnax
+=======
 
 .. toctree::
    :maxdepth: 4
 
-   src/Nautilus
+   src/Aronnax

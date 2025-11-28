@@ -1,5 +1,5 @@
-Nautilus Installation
-=====================
+Aronnax Installation
+====================
 
 .. toctree::
    :maxdepth: 2

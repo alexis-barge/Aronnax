@@ -19,7 +19,7 @@ autodoc_mock_imports = ['mpi4py','numpy','Cython']
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Nautilus'
+project = 'Aronnax'
 copyright = '2025, Barge Alexis, Le Sommer Julien'
 author = 'Barge Alexis, Le Sommer Julien'
 release = '0.1.0'

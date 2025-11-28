@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "Nautilus"
+name = "Aronnax"
 version = "0.0.1"
 description = "Python wrapper for the ocean GCM NEMO"
 authors = [ { name="Alexis Barge", email="alexis.barge@proton.me" }, 
@@ -29,5 +29,5 @@ dependencies = [
 
 
 [project.urls]
-"Homepage" = "https://github.com/alexis-barge/Nautilus"
-"Bug Tracker" = "https://github.com/alexis-barge/Nautilus/issues"
+"Homepage" = "https://github.com/alexis-barge/Aronnax"
+"Bug Tracker" = "https://github.com/alexis-barge/Aronnax/issues"

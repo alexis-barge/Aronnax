@@ -1,5 +1,5 @@
-Nautilus
-========
+Aronnax
+=======
 
 .. toctree::
     :maxdepth: 0
