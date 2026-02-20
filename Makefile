@@ -3,6 +3,7 @@
 # =====================================
 WRAPPER_HOME := $(shell pwd)
 ARCH_FCM     := $(WRAPPER_HOME)/../BLD/arch_nemo.fcm
+CPP_FCM      := $(WRAPPER_HOME)/../BLD/cpp.fcm
 ARCH         := arch_nemo.mk
 
 NEMO_LIB     := libnemo.so
@@ -40,10 +41,12 @@ build: dirs $(NEMO_LIB)
 $(ARCH): $(ARCH_FCM)
 	@echo "   >>> Copy NEMO arch file"
 	@sed -E \
-	  -e '/^%[A-Za-z0-9_]+[[:space:]]*$$/d' \
-	  -e 's/^%([A-Za-z0-9_]+)[[:space:]]+(.*)/\1 = \2/' \
-	  -e 's/%([A-Za-z0-9_]+)/$$(\1)/g' \
-	  $< > $@
+	   -e '/^%[A-Za-z0-9_]+[[:space:]]*$$/d' \
+	   -e 's/^%([A-Za-z0-9_]+)[[:space:]]+(.*)/\1 = \2/' \
+	   -e 's/%([A-Za-z0-9_]+)/$$(\1)/g' \
+	   $< > $@
+	@echo "   >>> Extracting CPP keys"
+	@awk '/fppkeys/ { printf "CPP_KEYS ="; for(i=2;i<=NF;i++) printf " -D%s", $$i; printf "\n"; }' $(CPP_FCM) >> $@
 
 dirs:
 	@mkdir -p $(LIB_DIR) $(OBJ_DIR) $(INC_DIR) $(PY_DIR)	
@@ -58,13 +61,13 @@ $(NEMO_LIB): $(OBJ)
 	@echo "   -------------------------------"
 
 %.o: $(SRC_DIR)/%.f90
-	$(FC) -$(CPP) $(FFLAGS) -c $< -o $(OBJ_DIR)/$@ -J $(INC_DIR) -I $(NEMO_INC_DIR) -I $(INC_DIR) $(USER_INC)
+	$(FC) -$(CPP) $(CPP_KEYS) $(FFLAGS) -c $< -o $(OBJ_DIR)/$@ -J $(INC_DIR) -I $(NEMO_INC_DIR) -I $(INC_DIR) $(USER_INC)
 
 
 ## ---------------------------------------------------
 ## Compilation of shared-NEMO Python layer in dev mode
 ## ---------------------------------------------------
-dev:
+dev: dirs
 	@echo "   >>> Compile in dev mode"
 	python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR)
 	@echo "      > DONE dev compilation"

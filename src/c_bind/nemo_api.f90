@@ -51,6 +51,13 @@ CONTAINS
       CALL timing_start( 'full code' )
       CALL timing_start( 'before step' )
       !
+#if defined key_agrif
+#if defined key_agrif_psisters
+      Agrif_Parallel_sisters = .TRUE.  ! Activate parallel sisters
+#endif
+      CALL Agrif_Init_Grids()          ! AGRIF: set the meshes
+#endif
+      !
       cxios_context = 'nemo'
       !
       !                             !-------------------------------------------------!
@@ -58,10 +65,30 @@ CONTAINS
       !                             !  must be done as soon as possible to get narea  !
       !                             !-------------------------------------------------!
       !
+#if defined key_xios
       IF( Agrif_Root() ) THEN
+         IF( lk_oasis ) THEN
+            CALL cpl_init( "oceanx", klocal_comm )                               ! nemo local communicator given by oasis
+# if defined key_xios3
+            CALL xios_initialize( "oceanx"         , local_comm=klocal_comm )   ! send nemo communicator to xios
+# else
+            CALL xios_initialize( "not used"       , local_comm=klocal_comm )   ! send nemo communicator to xios
+# endif
+         ELSE
             CALL xios_initialize( "for_xios_mpi_id", local_comm=klocal_comm )   ! nemo local communicator given by xios
+         ENDIF
       ENDIF
       CALL mpp_start( klocal_comm )
+#else
+      IF( lk_oasis ) THEN
+         IF( Agrif_Root() ) THEN
+            CALL cpl_init( "oceanx", klocal_comm )          ! nemo local communicator given by oasis
+         ENDIF
+         CALL mpp_start( klocal_comm )
+      ELSE
+         CALL mpp_start( klocal_comm )
+      ENDIF
+#endif
       !
       narea = mpprank + 1               ! mpprank: the rank of proc (0 --> mppsize -1 )
       lwm = (narea == 1)                ! control of output namelists
@@ -79,13 +106,17 @@ CONTAINS
       ! open /dev/null file to be able to supress output write easily
       IF( Agrif_Root() ) THEN
                   CALL ctl_opn(     numnul,           '/dev/null', 'UNKNOWN', 'FORMATTED', 'SEQUENTIAL', -1, -1, .FALSE. )
+#ifdef key_agrif
+      ELSE
+                  numnul = Agrif_Parent(numnul)
+#endif
       ENDIF
       !                             !--------------------!
       !                             ! Open listing units !  -> need sn_cfctl from namctl to define lwp
       !                             !--------------------!
       !
       READ(numnam_ref(MAX(INDEX(numnam_ref,"&namctl "),1):),namctl,IOSTAT=ios);CALL ctl_nam(ios,"namctl (ref)",.TRUE.)
-      READ(numnam_cfg(MAX(INDEX(numnam_cfg,"&namctl "),1):),namctl,IOSTAT=ios);CALL ctl_nam(ios,"namctl (cfg)",.FALSE.)
+      READ(numnam_cfg(MAX(INDEX(numnam_cfg,"&namctl "),1):),namctl,IOSTAT=ios);CALL ctl_nam(ios,"namctl (cfg)",.FALSE.)      
       !
       ! finalize the definition of namctl variables
       IF( narea < sn_cfctl%procmin .OR. narea > sn_cfctl%procmax .OR. MOD( narea - sn_cfctl%procmin, sn_cfctl%procincr ) /= 0 )   &
@@ -158,6 +189,13 @@ CONTAINS
 
       ! Initialise time level indices
       Nbb = 1   ;   Nnn = 2   ;   Naa = 3   ;   Nrhs = Naa
+#if defined key_agrif
+# if defined key_RK3
+      Kbb_a = Nbb   ;   Kmm_a = Nbb   ;   Krhs_a = Nrhs   ! RK3: agrif_oce module copies of time level indices
+# else
+      Kbb_a = Nbb   ;   Kmm_a = Nnn   ;   Krhs_a = Nrhs   ! MLF: agrif_oce module copies of time level indices
+# endif
+#endif
       !                             !-------------------------------!
       !                             !  NEMO general initialization  !
       !                             !-------------------------------!
@@ -172,6 +210,9 @@ CONTAINS
                            CALL     eos_init        ! Equation of state
                            CALL     wad_init        ! Wetting and drying options
 
+#if defined key_agrif
+     CALL Agrif_Declare_Var_ini   !  "      "   "   "      "  DOM
+#endif
                            CALL     dom_init( Nbb, Nnn, Naa )   ! Domain
       IF( sn_cfctl%l_prtctl )   &
          &                 CALL prt_ctl_init        ! Print control
@@ -206,7 +247,11 @@ CONTAINS
       !                                      ! Lateral physics
                            CALL ldf_tra_init             ! Lateral ocean tracer physics
                            CALL ldf_eiv_init             ! eddy induced velocity param.
+#if defined key_RK3
       IF( l_ldfeke     )   CALL ldf_eke_init( Nbb )      ! GEOMETRIC param. RK3
+#else
+      IF( l_ldfeke     )   CALL ldf_eke_init( Nbb, Nnn ) ! GEOMETRIC param. MLF
+#endif
                            CALL ldf_dyn_init             ! Lateral ocean momentum physics
 
       !                                      ! Active tracers
@@ -230,6 +275,10 @@ CONTAINS
 
                                                 ! ice shelf
                            CALL isf_init( Nbb, Nnn, Naa )
+#if defined key_top
+      !                                      ! Passive tracers
+      IF ( ln_top      )   CALL trc_init( Nbb, Nnn, Naa )
+#endif
       IF( l_ldfslp     )   CALL ldf_slp_init    ! slope of lateral mixing
 
       !                                      ! Misc. options
@@ -252,7 +301,24 @@ CONTAINS
       IF(lwp) WRITE(numout,cform_aaa)           ! Flag AAAAAAA
       !
       IF( ln_timing    )   CALL timing_stop( 'nemo_init' )
+
+# if defined key_agrif
+      IF( Agrif_Root() ) THEN
+          CALL Agrif_MPI_Init(mpi_comm_oce)
+      ENDIF
+# endif
       !
+#if defined key_agrif
+# if defined key_RK3
+      Kbb_a = Nbb; Kmm_a = Nbb; Krhs_a = Nrhs   ! RK3: agrif_oce module copies of time level indices
+# else
+      Kbb_a = Nbb; Kmm_a = Nnn; Krhs_a = Nrhs   ! MLF: agrif_oce module copies of time level indices
+# endif
+      CALL Agrif_Declare_Var       !  "      "   "   "      "  DYN/TRA
+# if defined key_top
+      IF ( ln_top )   CALL Agrif_Declare_Var_top   !  "      "   "   "      "  TOP
+# endif
+#endif
       ! -------------------
       ! Check all processes
       CALL mpp_max( 'nemogcm', nstop )
@@ -279,6 +345,34 @@ CONTAINS
       !
       istp = kstart
       !
+# if defined key_agrid
+      !
+      CALL Agrif_Regrid()
+      !
+      ! Recursive update from highest nested level to lowest:
+# if defined key_RK3
+      Kbb_a = Nbb; Kmm_a = Nbb; Krhs_a = Nrhs  ! RK3: agrid_oce module copies of time level indices
+# else
+      Kbb_a = Nbb; Kmm_a = Nnn; Krhs_a = Nrhs  ! MLF: agrid_oce module copies of time level indices
+# endif
+      CALL Agrif_step_child_adj(Agrif_Update_all)
+      CALL Agrif_step_child_adj(Agrif_Check_parent_bat)
+      !
+      DO WHILE( istp <= kend .AND. nstop == 0 )
+         !
+         ncom_stp = istp
+         CALL timing_start( 'step', istp, nit000, kend, nn_fsbc, 1000 )
+#   if defined key_RK3
+         CALL stp_RK3
+#   else
+         CALL stp_MLF
+#   endif
+         CALL timing_stop( 'step', istp )
+         istp = istp + 1
+      END DO
+      !
+# else
+      !
       IF( .NOT.ln_diurnal_only ) THEN                 !==  Standard time-stepping  ==!
          !
          DO WHILE( istp <= kend .AND. nstop == 0 )
@@ -286,7 +380,11 @@ CONTAINS
             ncom_stp = istp
             CALL timing_start( 'step', istp, nit000, kend, nn_fsbc, 1000 )
             !
+#   if defined key_RK3
             CALL stp_RK3( istp )
+#   else
+            CALL stp_MLF( istp )
+#   endif
             CALL timing_stop( 'step', istp )
             istp = istp + 1
             !
@@ -303,6 +401,8 @@ CONTAINS
          END DO
          !
       ENDIF
+      !
+# endif
       !
    END SUBROUTINE nemo_api_advance
 
@@ -346,8 +446,14 @@ CONTAINS
       !
       CALL nemo_closefile
       !
-      ! End xios
-      CALL xios_finalize
+#if defined key_xios
+                                    CALL xios_finalize  ! end mpp communications with xios
+      IF( lk_oasis     )            CALL cpl_finalize   ! end coupling and mpp communications with OASIS
+#else
+      IF    ( lk_oasis ) THEN   ;   CALL cpl_finalize   ! end coupling and mpp communications with OASIS
+      ELSEIF( lk_mpp   ) THEN   ;   CALL mppstop        ! end mpp communications
+      ENDIF
+#endif      
       !
    END SUBROUTINE nemo_api_finalization
 
@@ -397,6 +503,9 @@ CONTAINS
          &                                                'Compile with key_nosignedzero enabled:',   &
          &                                                '--> add -Dkey_nosignedzero to the definition of %CPP in your arch file' )
       !
+#if defined key_agrif
+      IF( ln_timing )   CALL ctl_warn( 'AGRIF not yet implemented with ln_timing = true')
+#endif
       !
    END SUBROUTINE nemo_ctl
 
@@ -475,6 +584,9 @@ CONTAINS
       CALL bdy_oce_dealloc()    ! bdy masks (incl. initialization)
       CALL sbc_oce_dealloc()
       CALL sbc_ice_dealloc()
+#if defined key_top
+      CALL top_dealloc()
+#endif
       !
    END SUBROUTINE nemo_dealloc
 
