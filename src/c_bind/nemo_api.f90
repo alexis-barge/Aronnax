@@ -11,10 +11,21 @@ MODULE nemo_api
    USE trdini         ! dyn/tra trends initialization     (trd_init routine)
    USE icbini         ! handle bergs, initialisation
    USE icbstp  , ONLY : icb_end     ! handle bergs, close iceberg files
+   USE cpl_oasis3     ! OASIS3 coupling
    USE step_diu       ! diurnal bulk SST timestepping (called from here if run offline)
    USE dia25h  , ONLY : dia_25h_init   ! 25h mean output (initialisation)
    USE c1d            ! 1D configuration
+#if defined key_top
+   USE trcini         ! passive tracer initialisation
+#endif
+#if defined key_nemocice_decomp
+   USE ice_domain_size, only: nx_global, ny_global
+#endif
+# if defined key_RK3
    USE stprk3
+# else
+   USE stpmlf         ! NEMO time-stepping               (stp_MLF   routine)
+# endif
    !
    USE lib_mpp        ! distributed memory computing
    USE mppini         ! shared/distributed memory setting (mpp_init routine)
@@ -40,7 +51,7 @@ CONTAINS
       ! I/O
       INTEGER, INTENT(IN)  ::   klocal_comm   ! imposed communicator
       ! Local variables
-      INTEGER ::              ios           ! local integers
+      INTEGER ::              ilocal_comm, ios           ! local integers
       !
       NAMELIST/namctl/ sn_cfctl, ln_timing, ln_diacfl, nn_isplt, nn_jsplt , nn_ictls,   &
          &                                             nn_ictle, nn_jctls , nn_jctle
@@ -68,7 +79,7 @@ CONTAINS
 #if defined key_xios
       IF( Agrif_Root() ) THEN
          IF( lk_oasis ) THEN
-            CALL cpl_init( "oceanx", klocal_comm )                               ! nemo local communicator given by oasis
+            CALL cpl_init( "oceanx", ilocal_comm )                               ! nemo local communicator given by oasis
 # if defined key_xios3
             CALL xios_initialize( "oceanx"         , local_comm=klocal_comm )   ! send nemo communicator to xios
 # else
@@ -453,7 +464,7 @@ CONTAINS
       IF    ( lk_oasis ) THEN   ;   CALL cpl_finalize   ! end coupling and mpp communications with OASIS
       ELSEIF( lk_mpp   ) THEN   ;   CALL mppstop        ! end mpp communications
       ENDIF
-#endif      
+#endif     
       !
    END SUBROUTINE nemo_api_finalization
 
@@ -530,6 +541,7 @@ CONTAINS
       IF( numdct_vol      /= -1 )   CLOSE( numdct_vol      )   ! volume transports
       IF( numdct_heat     /= -1 )   CLOSE( numdct_heat     )   ! heat transports
       IF( numdct_salt     /= -1 )   CLOSE( numdct_salt     )   ! salt transports
+      IF( numnul          /= -1 )   CLOSE( numnul          )   ! /dev/null
       !
       numout = 6                                     ! redefine numout in case it is used after this point...
       !

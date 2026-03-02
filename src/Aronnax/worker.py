@@ -1,25 +1,50 @@
 # external modules
-import mpi4py 
-mpi4py.rc.finalize = False
-from mpi4py import MPI
+from multiprocessing import Process, Queue
+import traceback
 
 __all__ = []
 
-# MPI infos
-class Paral:
-    """
-    This class contains MPI variables.
-
-    Attributes
-    ----------
-    GLOBAL_COMM : mpi4py.MPI.Intracomm
-        Communicator of all cores
-    GLOBAL_RANK : int
-        Rank number of cores in GLOBAL_COMM
-    MASTER : int
-        Output rank
+def worker_loop(task_queue, result_queue):
+    """ 
+    Isolated Python process: loads and run the NEMO Fortran lib. 
 
     """
-    NEMO_COMM = MPI.COMM_WORLD
-    RANK = NEMO_COMM.Get_rank()
-    MASTER = 0
+    from mpi4py import MPI
+    from . import nemo_py_bind
+
+    comm = MPI.COMM_WORLD
+
+    while True:
+        task = task_queue.get()
+
+        if task["cmd"] == "STOP":
+            break
+
+        try:
+            if task["cmd"] == "init":
+                first_ite = nemo_py_bind.nemo_init(comm.py2f())
+                result_queue.put({"status": "ok", "result": first_ite})
+
+            elif task["cmd"] == "advance":
+                info = nemo_py_bind.nemo_advance(task["ite_start"],task["ite_end"],task["stp"])
+                result_queue.put({"status": "ok", "result": info})
+
+            elif task["cmd"] == "get":
+                val = nemo_py_bind.nemo_get_val(task["varname"])
+                result_queue.put({"status": "ok", "result": val})
+
+            elif task["cmd"] == "set":
+                nemo_py_bind.nemo_set_val(task["varname"],task["val"])
+                result_queue.put({"status": "ok"})
+                
+            elif task["cmd"] == "finalize":
+                nemo_py_bind.nemo_finalization()
+                result_queue.put({"status": "ok"})
+
+        except Exception as e:
+            result_queue.put({
+                "status": "error",
+                "traceback": traceback.format_exc()
+            })
+
+

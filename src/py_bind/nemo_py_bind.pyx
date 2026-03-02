@@ -17,7 +17,7 @@ cdef extern void c_nemo_finalization() nogil
 def nemo_init(localcomm):
     # Check types
     if not isinstance(localcomm, (int)):
-        raise TypeError(f"init_nemo: localcomm must be int, got {type(localcomm)}")
+        raise TypeError(f"Cython layer -- nemo_init: localcomm must be int, got {type(localcomm)}")
 
     # convert
     cdef int klocalcomm = localcomm
@@ -33,11 +33,11 @@ def nemo_init(localcomm):
 def nemo_advance(ite_start,ite_end,stp):
     # Check types
     if not isinstance(ite_start, (int,np.integer)):
-        raise TypeError(f"nemo_advance: ite_start must be int, got {type(ite_start)}")
+        raise TypeError(f"Cython layer -- nemo_advance: ite_start must be int, got {type(ite_start)}")
     if not isinstance(ite_end, (int,np.integer)):
-        raise TypeError(f"nemo_advance: ite_end must be int, got {type(ite_end)}")
+        raise TypeError(f"Cython layer -- nemo_advance: ite_end must be int, got {type(ite_end)}")
     if not isinstance(stp, (float,np.floating)):
-        raise TypeError(f"nemo_advance: stp must be float, got {type(stp)}")
+        raise TypeError(f"Cython layer -- nemo_advance: stp must be float, got {type(stp)}")
 
     # convert
     cdef int kite_start = ite_start
@@ -55,7 +55,7 @@ def nemo_advance(ite_start,ite_end,stp):
 def nemo_get_val(varname):
     # Check types 
     if not isinstance(varname, (str)): 
-        raise TypeError(f"nemo_get_val: varname must be str, got {type(varname)}")
+        raise TypeError(f"Cython layer -- nemo_get_val: varname must be str, got {type(varname)}")
 
     # convert
     cdef bytes varname_tmp = varname.lower().encode("utf-8")
@@ -76,9 +76,9 @@ def nemo_get_val(varname):
 def nemo_set_val(varname,val):
     # Check types 
     if not isinstance(varname, (str)): 
-        raise TypeError(f"nemo_set_val: varname must be str, got {type(varname)}")
+        raise TypeError(f"Cython layer -- nemo_set_val: varname must be str, got {type(varname)}")
     if not isinstance(val, (np.ndarray)): 
-        raise TypeError(f"nemo_set_val: val must be array, got {type(val)}")
+        raise TypeError(f"Cython layer -- nemo_set_val: val must be array, got {type(val)}")
 
     # Convert
     cdef bytes varname_tmp = varname.lower().encode("utf-8")
@@ -90,7 +90,7 @@ def nemo_set_val(varname,val):
     c_nemo_get_size(&cd_varname_c,&nx,&ny,&nz)
 
     if val.shape != (nx,ny,nz):
-        raise TypeError(f"nemo_set_val: array size {val.shape} to set does not match {varname} NEMO size")
+        raise TypeError(f"Cython layer -- nemo_set_val: array size {val.shape} to set does not match {varname} NEMO size")
 
     # call
     with nogil:
