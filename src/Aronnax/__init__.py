@@ -14,5 +14,4 @@ variables used by the Fortran core to or from the Python environment.
 
 # export package
 from .solver import *
-from .worker import *
 from .api import *

@@ -1,51 +1,65 @@
-# external modules
-from multiprocessing import Process, Queue
+# worker.py
+import sys
 import traceback
+import json
+from mpi4py import MPI
+from . import nemo_py_bind
 
-__all__ = []
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
 
-def worker_loop(task_queue, result_queue):
-    """ 
-    Isolated Python process: loads and run the NEMO Fortran lib. 
+def broadcast_command(cmd):
+    return comm.bcast(cmd, root=0)
 
-    """
-    from mpi4py import MPI
-    from . import nemo_py_bind
+def send_response(obj):
+    """ Rank 0 sends structured JSON responses """
+    if rank == 0:
+        print(json.dumps(obj), flush=True)
 
-    comm = MPI.COMM_WORLD
+def main():
 
     while True:
-        task = task_queue.get()
+        
+        if rank == 0:
+            line = sys.stdin.readline()
+            if not line:
+                cmd = {"cmd": "STOP"}
+            else:
+                cmd = json.loads(line.strip())
+        else:
+            cmd = None
 
-        if task["cmd"] == "STOP":
+        cmd = broadcast_command(cmd)
+
+        if cmd["cmd"] == "STOP":
+            send_response({"status": "ok"})
             break
 
         try:
-            if task["cmd"] == "init":
+            if cmd["cmd"] == "init":
                 first_ite = nemo_py_bind.nemo_init(comm.py2f())
-                result_queue.put({"status": "ok", "result": first_ite})
+                send_response({"status": "ok", "result": first_ite})
 
-            elif task["cmd"] == "advance":
-                info = nemo_py_bind.nemo_advance(task["ite_start"],task["ite_end"],task["stp"])
-                result_queue.put({"status": "ok", "result": info})
+            elif cmd["cmd"] == "advance":
+                info = nemo_py_bind.nemo_advance(cmd["ite_start"], cmd["ite_end"], cmd["stp"])
+                send_response({"status": "ok", "result": info})
 
-            elif task["cmd"] == "get":
-                val = nemo_py_bind.nemo_get_val(task["varname"])
-                result_queue.put({"status": "ok", "result": val})
-
-            elif task["cmd"] == "set":
-                nemo_py_bind.nemo_set_val(task["varname"],task["val"])
-                result_queue.put({"status": "ok"})
-                
-            elif task["cmd"] == "finalize":
+            elif cmd["cmd"] == "finalize":
                 nemo_py_bind.nemo_finalization()
-                result_queue.put({"status": "ok"})
+                send_response({"status": "ok"})
 
-        except Exception as e:
-            result_queue.put({
-                "status": "error",
-                "traceback": traceback.format_exc()
-            })
+            elif cmd["cmd"] == "get":
+                val = nemo_py_bind.nemo_get_val(cmd["varname"])
+                send_response({"status": "ok", "result": val})
+
+            elif cmd["cmd"] == "set":
+                nemo_py_bind.nemo_set_val(cmd["varname"], cmd["val"])
+                send_response({"status": "ok"})
+
+        except Exception:
+            send_response({"status": "error", "traceback": traceback.format_exc()})
 
     MPI.Finalize()
 
+if __name__ == "__main__":
+    main()

@@ -1,84 +1,99 @@
 # external modules
-from multiprocessing import Process, Queue
-from .worker import worker_loop
+import subprocess
+import json
+import sys
+import os
 
-__all__ = []
+class MPIBackend:
 
-class FortranBackend:
-
-    def __init__(self):
-        self.task_queue = Queue()
-        self.result_queue = Queue()
+    def __init__(self, nproc=1, verbose=True):
+        self.nproc = nproc
         self.process = None
-        self.start()
+        if verbose:
+            self.log_stream = sys.stdout 
+        else: 
+            self.log_stream = open(os.devnull, 'w')
 
-    def start(self):
-        """ Start a clean worker """
-        # Empty queues
-        while not self.task_queue.empty():
-            self.task_queue.get_nowait()
-        while not self.result_queue.empty():
-            self.result_queue.get_nowait()
-    
-        # Start process
-        self.process = Process(
-            target = worker_loop,
-            args = (self.task_queue, self.result_queue),
-            daemon=True
-        )
-        self.process.start()
-
-    def stop(self):
-        """ Stop the worker. /!\ kills everything within  """
+    def start_workers(self):
         if self.process is not None:
-            self.task_queue.put({"cmd": "STOP"})
-            self.process.join()
+            return
+
+        self.process = subprocess.Popen(
+            [ "mpirun", "-np", str(self.nproc), "python3", "-m", "Aronnax.worker" ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=self.log_stream,
+            text=True
+        )
+
+    def stop_workers(self):
+        if self.process is not None:
+            if self.process.poll() is None:
+                self._send({"cmd": "STOP"})
+            self.process.wait()
             self.process = None
 
-    def restart(self):
-        """ Restart the worker """
-        self.stop()
-        self.start()
+    def _send(self, cmd):
+        if self.process is None:
+            raise RuntimeError("Worker is not running")
+
+        self.process.stdin.write(json.dumps(cmd) + "\n")
+        self.process.stdin.flush()
+
+        # Messages from workers
+        while True:
+            line = self.process.stdout.readline()
+            if not line:
+                self.stop_workers()
+                raise RuntimeError("Worker died unexpectedly.")
+
+            line = line.strip()
+
+            # Redirect other logs
+            if not line.startswith("{"):
+                print(line, file=self.log_stream)
+                continue
+
+            # Worker feedbacks (JSON)
+            try:
+                return json.loads(line)
+            except json.JSONDecodeError:
+                print(f"Invalid JSON from worker: {line}", file=self.log_stream)
+                continue
+
 
     def init(self):
-        self.task_queue.put({"cmd":"init"})
-        result = self.result_queue.get()
+        result = self._send({"cmd": "init"})
 
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
-
+        
         return result["result"]
-
 
     def advance(self, ite_start, ite_end, stp):
-        self.task_queue.put({"cmd":"advance", "ite_start" : ite_start, "ite_end" : ite_end, "stp" : stp})
-        result = self.result_queue.get()
-
+        result = self._send({"cmd": "advance", "ite_start": ite_start, "ite_end": ite_end, "stp": stp})
+        
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
-
+        
         return result["result"]
-
-    def get(self, varname):
-        self.task_queue.put({"cmd":"get", "varname" : varname})
-        result = self.result_queue.get()
-    
-        if result["status"] == "error":
-            raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
-
-        return result["result"]
-
-    def set(self,varname,val):
-        self.task_queue.put({"cmd":"set", "varname" : varname, "val" : val})
-        result = self.result_queue.get()
-
-        if result["status"] == "error":
-            raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
 
     def finalize(self):
-        self.task_queue.put({"cmd": "finalize"})
-        result = self.result_queue.get()
-
+        result = self._send({"cmd": "finalize"})
+        
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
 
+    def get(self, varname):
+        result = self._send({"cmd": "get", "varname": varname})
+        
+        if result["status"] == "error":
+            raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
+        
+        return result["result"]
+
+    def set(self, varname, val):
+        result = self._send({"cmd": "set", "varname": varname, "val": val})
+        
+        if result["status"] == "error":
+            raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))

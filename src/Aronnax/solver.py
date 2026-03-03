@@ -1,5 +1,5 @@
 # Aronnax modules
-from .api import FortranBackend
+from .api import MPIBackend
 
 __all__ = ['NEMO']
 
@@ -12,8 +12,10 @@ class NEMO:
 
     """
 
-    def __init__(self, total_ite=0, total_time=0.0, config='ORCA1', debug=False):
-        self._backend = FortranBackend()
+    def __init__(self, total_ite=0, total_time=0.0, config='ORCA1', debug=False, nproc=1, verbose=True):
+
+
+        self._backend = MPIBackend(nproc=nproc, verbose=verbose)
         self.initialized = False
         self.total_ite = total_ite
         self.total_time = total_time
@@ -35,15 +37,11 @@ class NEMO:
         """ Fully stops NEMO and its worker """
         if self.initialized:
             self._backend.finalize()
-            self.initialized = False
-        if self._backend.process != None:
-            self._backend.stop()
 
     def start(self):
         """ Start NEMO initialization """
-        if self._backend.process == None:
-            self._backend.start()
-
+        if self._backend.process is None:
+            self._backend.start_workers()
         if not self.initialized:
             self.total_ite = self._backend.init()
             self.initialized = True
@@ -54,7 +52,9 @@ class NEMO:
         if self.initialized:
             self._backend.finalize()
             self.initialized = False
-        self._backend.stop()
+        if self._backend.process is not None:
+            self._backend.stop_workers()
+         
 
     #def restart(self):
         # Get required variables for restart
