@@ -47,4 +47,5 @@ def worker_loop(task_queue, result_queue):
                 "traceback": traceback.format_exc()
             })
 
+    MPI.Finalize()
 
