@@ -34,9 +34,8 @@ class NEMO:
            return f"NEMO.{self.config} FAILED -- Current iteration: {self.total_ite} and simulation time: {self.total_time}"
 
     def __del__(self):
-        """ Fully stops NEMO and its worker """
-        if self.initialized:
-            self._backend.finalize()
+        """ Properly stops NEMO and its worker if necessary """
+        self.finish()
 
     def start(self):
         """ Start NEMO initialization """

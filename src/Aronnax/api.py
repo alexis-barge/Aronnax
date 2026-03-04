@@ -17,9 +17,16 @@ class MPIBackend:
     def start_workers(self):
         if self.process is not None:
             return
+       
+        # sequential, srun or mpirun
+        if self.nproc == 1:
+            start_cmd = [ "python3", "-m", "Aronnax.worker" ]
+        else:
+            mpi_cmd = "srun" if "SLURM_JOB_ID" in os.environ else "mpirun"
+            start_cmd = [ mpi_cmd, "-n", str(self.nproc), "python3", "-m", "Aronnax.worker" ]
 
         self.process = subprocess.Popen(
-            [ "mpirun", "-np", str(self.nproc), "python3", "-m", "Aronnax.worker" ],
+            start_cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=self.log_stream,
