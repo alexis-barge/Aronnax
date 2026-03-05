@@ -1,6 +1,8 @@
 # external modules
 import subprocess
 import json
+import pickle
+import base64
 import sys
 import os
 
@@ -73,34 +75,35 @@ class MPIBackend:
         result = self._send({"cmd": "init"})
 
         if result["status"] == "error":
-            raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
-        
+            raise RuntimeError(result.get("traceback", "Worker could not run 'init'"))
         return result["result"]
 
     def advance(self, ite_start, ite_end, stp):
         result = self._send({"cmd": "advance", "ite_start": ite_start, "ite_end": ite_end, "stp": stp})
         
         if result["status"] == "error":
-            raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
-        
+            raise RuntimeError(result.get("traceback", "Worker could not run 'advance'"))
         return result["result"]
 
     def finalize(self):
         result = self._send({"cmd": "finalize"})
         
         if result["status"] == "error":
-            raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
+            raise RuntimeError(result.get("traceback", "Worker could not run 'finalize'"))
 
-    def get(self, varname):
-        result = self._send({"cmd": "get", "varname": varname})
-        
-        if result["status"] == "error":
-            raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
-        
-        return result["result"]
+    def get_local(self, varname, rank, varid):
+        result = self._send({"cmd": "get_local", "varname": varname, "rank": rank, "key": varid})
 
-    def set(self, varname, val):
-        result = self._send({"cmd": "set", "varname": varname, "val": val})
-        
         if result["status"] == "error":
-            raise RuntimeError(result.get("traceback", "Low level error stopped or killed NEMO."))
+            raise RuntimeError(result.get("traceback", "Worker could not run 'get_local'"))
+
+        data = base64.b64decode(result["result"])
+        return pickle.loads(data)
+
+    def purge(self, varid):
+        result = self._send({"cmd" : "purge", "key" : varid})
+
+        if result["status"] == "error":
+            raise RuntimeError(result.get("traceback", "Worker could not run 'purge'"))
+
+

@@ -1,5 +1,6 @@
 # Aronnax modules
 from .api import MPIBackend
+from .field import DistributedField
 
 __all__ = ['NEMO']
 
@@ -22,6 +23,7 @@ class NEMO:
         self.config = config
         self.debug = debug
         self.error = False
+        self.fields = []
 
     def is_running(self):
         """ Is NEMO program currently running """
@@ -80,14 +82,14 @@ class NEMO:
             else:
                 self.total_time += ite*step
                 self.total_ite += ite
+
+                # clear field memory
+                for fld in self.fields:
+                    fld.free() if not fld.save else None
+
                 print(f"Time advancement reached iteration: {self.total_ite} and total simulation time: {self.total_time}")
 
-    def get(self,varname):
+    def field(self,varname,save=False):
         if self.initialized:
-            print(f"Get {varname} at {self}")
-            return self._backend.get(varname)
-
-    def set(self,varname,val):
-        if self.initialized and not self.error:
-            print(f"Set {varname} at {self}")
-            self._backend.set(varname,val)
+            self.fields.append( DistributedField(self._backend, varname, save) )
+            return self.fields[-1]
