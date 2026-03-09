@@ -2,6 +2,7 @@
 import sys
 import traceback
 import json
+import cloudpickle
 import pickle
 import base64
 
@@ -19,7 +20,7 @@ def send_response(obj,speaker=0):
         print(json.dumps(obj), flush=True)
 
 def main():
-
+    
     while True:
         
         if rank == 0:
@@ -53,12 +54,18 @@ def main():
                 send_response({"status": "ok"})
 
 
+            elif cmd["cmd"] == "pull":
+                if cmd["key"] not in memory:
+                    val = nemo_py_bind.nemo_get_val(cmd["varname"])
+                    memory.update({ cmd["key"] : val })
+                send_response({"status": "ok"})
+            
+
             elif cmd["cmd"] == "get_local":
-                if cmd["key"] in memory.keys():
+                if cmd["key"] in memory:
                     val = memory[cmd["key"]]
                 else:
                     val = nemo_py_bind.nemo_get_val(cmd["varname"])
-                    memory.update({ cmd["key"] : val })
 
                 payload = None
                 if rank == cmd["rank"]:
@@ -67,14 +74,37 @@ def main():
                 send_response({"status": "ok", "result" : payload}, speaker=cmd["rank"])
 
 
-            elif cmd["cmd"] == "purge":
-                memory.pop(cmd["key"], None)
+            elif cmd["cmd"] == "push":
+                if cmd["key"] in memory:
+                    val = memory[cmd["key"]]
+                    nemo_py_bind.nemo_set_val(cmd["varname"], memory[cmd["key"]])
+                send_response({"status": "ok"})
+            
+
+            elif cmd["cmd"] == "set_local":
+                if rank == cmd["rank"]:
+                    val = pickle.loads( base64.b64decode(cmd["val"]) )
+                    nemo_py_bind.nemo_set_val(cmd["varname"], val)
+                send_response({"status": "ok"}, speaker=cmd["rank"])
+
+
+            elif cmd["cmd"] == "apply":
+                func = cloudpickle.loads( base64.b64decode(cmd["func"]) )
+                values = []
+                for k in cmd["args"]:
+                    values.append(memory[k])
+                func_res = func(*values)
+                
+                if cmd["key"] in memory:
+                    memory[cmd["key"]] = func_res
+                else:
+                    memory.update({ cmd["key"] : func_res })
                 send_response({"status": "ok"})
 
 
-            #elif cmd["cmd"] == "set":
-            #    nemo_py_bind.nemo_set_val(cmd["varname"], cmd["val"])
-            #    send_response({"status": "ok"})
+            elif cmd["cmd"] == "purge":
+                memory.pop(cmd["key"], None)
+                send_response({"status": "ok"})
 
 
         except Exception:

@@ -1,6 +1,7 @@
 # external modules
 import subprocess
 import json
+import cloudpickle
 import pickle
 import base64
 import sys
@@ -91,6 +92,12 @@ class MPIBackend:
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Worker could not run 'finalize'"))
 
+    def pull(self, varname, varid):
+        result = self._send({"cmd": "pull", "varname": varname, "key": varid})
+
+        if result["status"] == "error":
+            raise RuntimeError(result.get("traceback", "Worker could not run 'pull'"))
+
     def get_local(self, varname, rank, varid):
         result = self._send({"cmd": "get_local", "varname": varname, "rank": rank, "key": varid})
 
@@ -99,6 +106,27 @@ class MPIBackend:
 
         data = base64.b64decode(result["result"])
         return pickle.loads(data)
+
+    def push(self, varname, varid):
+        result = self._send({"cmd": "push", "varname": varname, "key": varid})
+
+        if result["status"] == "error":
+            raise RuntimeError(result.get("traceback", "Worker could not run 'push'"))
+
+    def set_local(self, varname, rank, val):
+        payload = base64.b64encode( pickle.dumps(val, protocol=pickle.HIGHEST_PROTOCOL) ).decode()
+        result = self._send({"cmd": "set_local", "varname": varname, "rank": rank, "val": payload})
+
+        if result["status"] == "error":
+            raise RuntimeError(result.get("traceback", "Worker could not run 'set_local'"))
+
+    def apply(self, func, varid, arg_fields):
+        payload = base64.b64encode(cloudpickle.dumps(func)).decode()
+
+        result = self._send({"cmd": "apply", "key": varid, "func": payload, "args": [f.id for f in arg_fields] })
+
+        if result["status"] == "error":
+            raise RuntimeError(result.get("traceback", "Worker could not run 'apply'"))
 
     def purge(self, varid):
         result = self._send({"cmd" : "purge", "key" : varid})

@@ -15,9 +15,7 @@ class NEMO:
 
     def __init__(self, total_ite=0, total_time=0.0, config='ORCA1', debug=False, nproc=1, verbose=True):
 
-
         self._backend = MPIBackend(nproc=nproc, verbose=verbose)
-        self.initialized = False
         self.total_ite = total_ite
         self.total_time = total_time
         self.config = config
@@ -27,7 +25,7 @@ class NEMO:
 
     def is_running(self):
         """ Is NEMO program currently running """
-        return self.initialized
+        return self._backend.process is not None
 
     def __str__(self):
         if not self.error: 
@@ -43,17 +41,13 @@ class NEMO:
         """ Start NEMO initialization """
         if self._backend.process is None:
             self._backend.start_workers()
-        if not self.initialized:
             self.total_ite = self._backend.init()
-            self.initialized = True
             self.error = False
 
     def finish(self):
         """ Finalization routines: terminates NEMO program and the worker """
-        if self.initialized:
-            self._backend.finalize()
-            self.initialized = False
         if self._backend.process is not None:
+            self._backend.finalize()
             self._backend.stop_workers()
          
 
@@ -70,7 +64,7 @@ class NEMO:
 
     def advance(self, ite=1, step=0.0):
         """ Advance NEMO time loop. """
-        if self.initialized and not self.error:
+        if self._backend.process is not None and not self.error:
             info = self._backend.advance(self.total_ite, self.total_ite + ite - 1, 0.0)
 
             # Check errors
@@ -90,6 +84,6 @@ class NEMO:
                 print(f"Time advancement reached iteration: {self.total_ite} and total simulation time: {self.total_time}")
 
     def field(self,varname,save=False):
-        if self.initialized:
+        if self._backend.process is not None:
             self.fields.append( DistributedField(self._backend, varname, save) )
             return self.fields[-1]
