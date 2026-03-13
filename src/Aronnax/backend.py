@@ -77,7 +77,7 @@ class MPIBackend:
 
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Worker could not run 'init'"))
-        return result["result"]
+        return result["first_ite"], result["date"]
 
     def advance(self, ite_start, ite_end, stp):
         result = self._send({"cmd": "advance", "ite_start": ite_start, "ite_end": ite_end, "stp": stp})

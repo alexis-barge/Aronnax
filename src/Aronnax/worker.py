@@ -40,8 +40,8 @@ def main():
 
         try:
             if cmd["cmd"] == "init":
-                first_ite = nemo_py_bind.nemo_init(comm.py2f())
-                send_response({"status": "ok", "result": first_ite})
+                first_ite, date = nemo_py_bind.nemo_init(comm.py2f())
+                send_response({"status": "ok", "first_ite": first_ite, "date": date})
 
 
             elif cmd["cmd"] == "advance":

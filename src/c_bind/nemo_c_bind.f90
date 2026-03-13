@@ -1,4 +1,4 @@
-SUBROUTINE c_nemo_init(klocal_comm,kit000) BIND(C)
+SUBROUTINE c_nemo_init(klocal_comm,kit000,kdastp) BIND(C)
       !!----------------------------------------------------------------------
       !!                     ***  ROUTINE c_nemo_init  ***
       !!
@@ -13,6 +13,7 @@ SUBROUTINE c_nemo_init(klocal_comm,kit000) BIND(C)
       ! I/O
       INTEGER (c_int), INTENT(IN)  ::   klocal_comm   ! imposed communicator
       INTEGER (c_int), INTENT(OUT) ::   kit000        ! first iteration
+      INTEGER (c_int), INTENT(OUT) ::   kdastp        ! date at first iteration
       !!----------------------------------------------------------------------
       
       ! Convert
@@ -20,17 +21,18 @@ SUBROUTINE c_nemo_init(klocal_comm,kit000) BIND(C)
       ! API - return starting iteration
       CALL nemo_api_init(klocal_comm)
       kit000 = nit000
+      kdastp = ndastp
       
 END SUBROUTINE c_nemo_init
 
 
-SUBROUTINE c_nemo_advance(kite_start,kite_end,pstp_c,kinfo) BIND(C)
-      !!----------------------------------------------------------------------
+SUBROUTINE c_nemo_advance(kite_start,kite_end,kinfo) BIND(C)
+      !!--------------------------------------------------------------------
       !!                     ***  ROUTINE c_nemo_init  ***
       !!
       !! ** Purpose :   C interface for advancing time loop
       !!----------------------------------------------------------------------
-      USE iso_c_binding, ONLY: c_int, c_float
+      USE iso_c_binding, ONLY: c_int
       USE nemo_api
 
       IMPLICIT NONE
@@ -38,14 +40,10 @@ SUBROUTINE c_nemo_advance(kite_start,kite_end,pstp_c,kinfo) BIND(C)
       !!----------------------------------------------------------------------
       ! I/O
       INTEGER (c_int), INTENT(IN) ::   kite_end, kite_start ! number of time iteration
-      REAL (c_float), INTENT(IN) :: pstp_c               ! time step - C
       INTEGER (c_int), INTENT(OUT)  :: kinfo
       ! Local variables
       REAL(wp) :: pstp_f        ! time step - Fortran
       !!----------------------------------------------------------------------
-      
-      ! Convert
-      pstp_f = REAL(pstp_c, kind=wp)
       
       ! API - return error flag
       CALL nemo_api_advance(kite_start,kite_end)
@@ -54,22 +52,28 @@ SUBROUTINE c_nemo_advance(kite_start,kite_end,pstp_c,kinfo) BIND(C)
 END SUBROUTINE c_nemo_advance
 
 
-SUBROUTINE c_nemo_finalization() BIND(C)
+SUBROUTINE c_nemo_finalization(kite,ll_write_rst) BIND(C)
       !!----------------------------------------------------------------------
       !!                     ***  ROUTINE c_nemo_finalization  ***
       !!
       !! ** Purpose :   C interface for NEMO finalization
       !!----------------------------------------------------------------------
+      USE iso_c_binding, ONLY: c_int
       USE nemo_api
 
       IMPLICIT NONE
 
       !!----------------------------------------------------------------------
       ! I/O
+      INTEGER (c_int), INTENT(IN) ::   kite         ! number of time iteration
+      INTEGER (c_int), INTENT(IN) ::   ll_write_rst ! write restart file
       ! Local variables
       !!----------------------------------------------------------------------
-      
+      ! convert
+
       ! API
+      IF( ll_write_rst .EQ. 1 ) CALL rst_write(kite, Nbb, Nnn, Naa)
+
       CALL nemo_api_finalization(0)
       
 END SUBROUTINE c_nemo_finalization
