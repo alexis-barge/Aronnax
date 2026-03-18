@@ -6,11 +6,12 @@ import numpy as np
 
 """ Import Fortran interface - nogil since Fortran does not manipulate Python objects """
 cdef extern void c_nemo_init(int *klocalcomm, int *kit000, int *kdastp) nogil
-cdef extern void c_nemo_advance(int *kite_start, int *kite_end, int *kinfo) nogil
+cdef extern void c_nemo_advance(int *kite_start, int *kite_end, int *ld_rst, int *kinfo) nogil
+cdef extern void c_nemo_restart_ite(int *kite_curr, int *kite_restart) nogil
 cdef extern void c_nemo_get_size(const char **cd_varname_c, int *knx, int *kny, int *knz) nogil
 cdef extern void c_nemo_get_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval) nogil
 cdef extern void c_nemo_set_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval) nogil
-cdef extern void c_nemo_finalization(int *kite, int *ll_write_rst) nogil
+cdef extern void c_nemo_finalization() nogil
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -31,23 +32,42 @@ def nemo_init(localcomm):
     return kit000, f"{kdastp:08d}" 
 
 
-def nemo_advance(ite_start,ite_end):
+def nemo_advance(ite_start,ite_end,rst):
     # Check types
     if not isinstance(ite_start, (int,np.integer)):
         raise TypeError(f"Cython layer -- nemo_advance: ite_start must be int, got {type(ite_start)}")
     if not isinstance(ite_end, (int,np.integer)):
         raise TypeError(f"Cython layer -- nemo_advance: ite_end must be int, got {type(ite_end)}")
+    if not isinstance(rst, (int,np.integer)):
+        raise TypeError(f"Cython layer -- nemo_advance: rst must be int, got {type(rst)}")
 
     # convert
     cdef int kite_start = ite_start
     cdef int kite_end = ite_end 
+    cdef int ld_rst = rst
     cdef int kinfo = 0
 
     # call
     with nogil:
-        c_nemo_advance(&kite_start, &kite_end, &kinfo)
+        c_nemo_advance(&kite_start, &kite_end, &ld_rst, &kinfo)
 
     return kinfo
+
+
+def nemo_restart_ite(curr_ite):
+    # Check types
+    if not isinstance(curr_ite, (int,np.integer)):
+        raise TypeError(f"Cython layer -- nemo_restart_ite: curr_ite must be int, got {type(curr_ite)}")
+
+    # convert
+    cdef int kite_curr = curr_ite
+    cdef int kite_restart = -1
+
+    # call
+    with nogil:
+        c_nemo_restart_ite(&kite_curr, &kite_restart)
+
+    return kite_restart
 
 
 def nemo_get_val(varname):
@@ -95,17 +115,7 @@ def nemo_set_val(varname,val):
         c_nemo_set_val(&cd_varname_c,&nx,&ny,&nz,&pval[0,0,0])
 
 
-def nemo_finalization(ite,write_rst):
-    # Check types 
-    if not isinstance(ite, (int)): 
-        raise TypeError(f"Cython layer -- nemo_finalization: ite must be int, got {type(ite)}")
-    if not isinstance(write_rst, (int)): 
-        raise TypeError(f"Cython layer -- nemo_finalization: write_rst must be int, got {type(write_rst)}")
-    
-    # convert
-    cdef int kite = ite
-    cdef int ll_write_rst = write_rst
-    
+def nemo_finalization():
     # call
     with nogil:
-        c_nemo_finalization(&kite,&ll_write_rst)
+        c_nemo_finalization()

@@ -26,8 +26,8 @@ SUBROUTINE c_nemo_init(klocal_comm,kit000,kdastp) BIND(C)
 END SUBROUTINE c_nemo_init
 
 
-SUBROUTINE c_nemo_advance(kite_start,kite_end,kinfo) BIND(C)
-      !!--------------------------------------------------------------------
+SUBROUTINE c_nemo_advance(kite_start,kite_end,ld_rst,kinfo) BIND(C)
+      !!----------------------------------------------------------------------
       !!                     ***  ROUTINE c_nemo_init  ***
       !!
       !! ** Purpose :   C interface for advancing time loop
@@ -39,24 +39,30 @@ SUBROUTINE c_nemo_advance(kite_start,kite_end,kinfo) BIND(C)
 
       !!----------------------------------------------------------------------
       ! I/O
-      INTEGER (c_int), INTENT(IN) ::   kite_end, kite_start ! number of time iteration
-      INTEGER (c_int), INTENT(OUT)  :: kinfo
+      INTEGER (c_int), INTENT(IN)  ::   kite_end, kite_start ! number of time iteration
+      INTEGER (c_int), INTENT(IN)  ::   ld_rst               ! write restart at kite_end
+      INTEGER (c_int), INTENT(OUT) ::   kinfo
       ! Local variables
-      REAL(wp) :: pstp_f        ! time step - Fortran
       !!----------------------------------------------------------------------
       
+      ! Restart
+      IF ( ld_rst == 1 ) nitrst = kite_end
+
       ! API - return error flag
       CALL nemo_api_advance(kite_start,kite_end)
       kinfo = nstop
 
+      IF ( ld_rst == 1 ) nitrst = nitend
+
 END SUBROUTINE c_nemo_advance
 
 
-SUBROUTINE c_nemo_finalization(kite,ll_write_rst) BIND(C)
+SUBROUTINE c_nemo_restart_ite(kite_curr,kite_restart) BIND(C)
       !!----------------------------------------------------------------------
-      !!                     ***  ROUTINE c_nemo_finalization  ***
+      !!                     ***  ROUTINE c_nemo_restart_ite  ***
       !!
-      !! ** Purpose :   C interface for NEMO finalization
+      !! ** Purpose :   Returns number of minimal required iteration to perform 
+      !!                writing of restart fils from current iteration 
       !!----------------------------------------------------------------------
       USE iso_c_binding, ONLY: c_int
       USE nemo_api
@@ -65,15 +71,41 @@ SUBROUTINE c_nemo_finalization(kite,ll_write_rst) BIND(C)
 
       !!----------------------------------------------------------------------
       ! I/O
-      INTEGER (c_int), INTENT(IN) ::   kite         ! number of time iteration
-      INTEGER (c_int), INTENT(IN) ::   ll_write_rst ! write restart file
+      INTEGER (c_int), INTENT(IN)  :: kite_curr
+      INTEGER (c_int), INTENT(OUT) :: kite_restart
+      ! Local variables
+      INTEGER :: ioce, iice
+      !!----------------------------------------------------------------------
+
+      ! API
+      ioce = kite_curr + 1
+#if defined key_si3
+      iice = MOD( kite_curr - nit000, nn_fsbc ) + kite_curr + 2*nn_fsbc - 1  
+#else
+      iice = -1
+#endif
+      kite_restart = MAX( ioce, iice )
+
+END SUBROUTINE c_nemo_restart_ite
+
+
+SUBROUTINE c_nemo_finalization() BIND(C)
+      !!----------------------------------------------------------------------
+      !!                     ***  ROUTINE c_nemo_finalization  ***
+      !!
+      !! ** Purpose :   C interface for NEMO finalization
+      !!----------------------------------------------------------------------
+      USE nemo_api
+
+      IMPLICIT NONE
+
+      !!----------------------------------------------------------------------
+      ! I/O
       ! Local variables
       !!----------------------------------------------------------------------
       ! convert
 
       ! API
-      IF( ll_write_rst .EQ. 1 ) CALL rst_write(kite, Nbb, Nnn, Naa)
-
       CALL nemo_api_finalization(0)
       
 END SUBROUTINE c_nemo_finalization
