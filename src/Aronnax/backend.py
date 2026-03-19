@@ -8,7 +8,14 @@ import sys
 import os
 
 class MPIBackend:
+    """
+    This class ...
 
+    Attributes
+    ----------
+    ...
+
+    """
     def __init__(self, nproc=1, verbose=True):
         self.nproc = nproc
         self.process = None
@@ -18,6 +25,7 @@ class MPIBackend:
             self.log_stream = open(os.devnull, 'w')
 
     def start_workers(self):
+        """ ... """
         if self.process is not None:
             return
        
@@ -37,6 +45,7 @@ class MPIBackend:
         )
 
     def stop_workers(self):
+        """ ... """
         if self.process is not None:
             if self.process.poll() is None:
                 self._send({"cmd": "STOP"})
@@ -44,6 +53,7 @@ class MPIBackend:
             self.process = None
 
     def _send(self, cmd):
+        """ ... """
         if self.process is None:
             raise RuntimeError("Worker is not running")
 
@@ -73,32 +83,41 @@ class MPIBackend:
 
 
     def init(self):
+        ''' ... '''
         result = self._send({"cmd": "init"})
 
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Worker could not run 'init'"))
         return result["first_ite"], result["date"]
 
-    def advance(self, ite_start, ite_end, stp):
-        result = self._send({"cmd": "advance", "ite_start": ite_start, "ite_end": ite_end, "stp": stp})
+
+    def advance(self, ite_start, ite_end, rst):
+        ''' ... '''
+        result = self._send({"cmd": "advance", "ite_start": ite_start, "ite_end": ite_end, "rst": rst})
         
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Worker could not run 'advance'"))
         return result["result"]
 
+
     def finalize(self):
+        ''' ... '''
         result = self._send({"cmd": "finalize"})
         
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Worker could not run 'finalize'"))
 
+
     def pull(self, varname, varid):
+        ''' ... '''
         result = self._send({"cmd": "pull", "varname": varname, "key": varid})
 
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Worker could not run 'pull'"))
 
+
     def get_local(self, varname, rank, varid):
+        ''' ... '''
         result = self._send({"cmd": "get_local", "varname": varname, "rank": rank, "key": varid})
 
         if result["status"] == "error":
@@ -107,28 +126,35 @@ class MPIBackend:
         data = base64.b64decode(result["result"])
         return pickle.loads(data)
 
+
     def push(self, varname, varid):
+        ''' ... '''
         result = self._send({"cmd": "push", "varname": varname, "key": varid})
 
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Worker could not run 'push'"))
 
+
     def set_local(self, varname, rank, val):
+        ''' ... '''
         payload = base64.b64encode( pickle.dumps(val, protocol=pickle.HIGHEST_PROTOCOL) ).decode()
         result = self._send({"cmd": "set_local", "varname": varname, "rank": rank, "val": payload})
 
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Worker could not run 'set_local'"))
 
-    def apply(self, func, varid, arg_fields):
-        payload = base64.b64encode(cloudpickle.dumps(func)).decode()
 
+    def apply(self, func, varid, arg_fields):
+        ''' ... '''
+        payload = base64.b64encode(cloudpickle.dumps(func)).decode()
         result = self._send({"cmd": "apply", "key": varid, "func": payload, "args": [f.id for f in arg_fields] })
 
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Worker could not run 'apply'"))
 
+
     def purge(self, varid):
+        ''' ... '''
         result = self._send({"cmd" : "purge", "key" : varid})
 
         if result["status"] == "error":

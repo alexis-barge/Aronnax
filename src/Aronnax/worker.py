@@ -45,7 +45,7 @@ def main():
 
 
             elif cmd["cmd"] == "advance":
-                info = nemo_py_bind.nemo_advance(cmd["ite_start"], cmd["ite_end"], cmd["stp"])
+                info = nemo_py_bind.nemo_advance(cmd["ite_start"], cmd["ite_end"], cmd["rst"])
                 send_response({"status": "ok", "result": info})
 
 
