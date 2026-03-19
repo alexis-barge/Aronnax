@@ -57,38 +57,6 @@ SUBROUTINE c_nemo_advance(kite_start,kite_end,ld_rst,kinfo) BIND(C)
 END SUBROUTINE c_nemo_advance
 
 
-SUBROUTINE c_nemo_restart_ite(kite_curr,kite_restart) BIND(C)
-      !!----------------------------------------------------------------------
-      !!                     ***  ROUTINE c_nemo_restart_ite  ***
-      !!
-      !! ** Purpose :   Returns number of minimal required iteration to perform 
-      !!                writing of restart fils from current iteration 
-      !!----------------------------------------------------------------------
-      USE iso_c_binding, ONLY: c_int
-      USE nemo_api
-
-      IMPLICIT NONE
-
-      !!----------------------------------------------------------------------
-      ! I/O
-      INTEGER (c_int), INTENT(IN)  :: kite_curr
-      INTEGER (c_int), INTENT(OUT) :: kite_restart
-      ! Local variables
-      INTEGER :: ioce, iice
-      !!----------------------------------------------------------------------
-
-      ! API
-      ioce = kite_curr + 1
-#if defined key_si3
-      iice = MOD( kite_curr - nit000, nn_fsbc ) + kite_curr + 2*nn_fsbc - 1  
-#else
-      iice = -1
-#endif
-      kite_restart = MAX( ioce, iice )
-
-END SUBROUTINE c_nemo_restart_ite
-
-
 SUBROUTINE c_nemo_finalization() BIND(C)
       !!----------------------------------------------------------------------
       !!                     ***  ROUTINE c_nemo_finalization  ***
