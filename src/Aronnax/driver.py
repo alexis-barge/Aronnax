@@ -30,12 +30,13 @@ class NEMO:
 
 
     def __str__(self):
-        status = "ONLINE" is self.is_running() else "OFFLINE"
+        status = "ONLINE" if self.is_running() else "OFFLINE"
         err = " - OK " if not self._error else " - FAILED: check ocean.output logs"
-        message = f"Run {self._run._label}: {status}{err}\n"           \   
-                + f"    - Current iteration: {self._run._ite}\n"        \ 
-                + f"    - Simulated time: {self._run.format_date()}\n" \
-                + f"    - Current date: {self._run.date} from {self._run.date0}"
+        message = ( f"Run {self._run._label}: {status}{err}\n"
+                    f"    - Current iteration: {self._run._ite}\n"
+                    f"    - Simulated time: {self._run.format_date()}\n"
+                    f"    - Current date: {self._run.date} from {self._run.date0}"
+                  )
         return message
 
 

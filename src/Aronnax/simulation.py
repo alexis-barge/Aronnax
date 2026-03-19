@@ -23,13 +23,13 @@ class Run:
 
     def format_date(self):
         """ ... """
-        yy = int( self.run._time // 31536000.0 )
-        mm = int( (self.run._time - yy*31536000.0) // 2678400.0 )
-        dd = int( (self.run._time - yy*31536000.0 - mm*2678400.0 ) // 86400.0 )
+        yy = int( self._time // 31536000.0 )
+        mm = int( (self._time - yy*31536000.0) // 2678400.0 )
+        dd = int( (self._time - yy*31536000.0 - mm*2678400.0 ) // 86400.0 )
         return f"{yy:02d}y" + f"{mm:02d}m" + f"{dd:02d}d"
 
 
-    def next_restart(self, end_ite=self._ite):
+    def next_restart(self, end_ite):
         """ 
         Returns next iteration to reach from a given one
         to make NEMO write the restart files
@@ -69,7 +69,7 @@ class Run:
         # dumping directory
         self._dump_dir = os.path.join(os.getcwd(),self._label)
         if os.path.isdir(self._dump_dir):
-            print(f"Warning: directory {dump_dir} exists and will be overwritten at dumping"
+            print(f"Warning: directory {dump_dir} exists and will be overwritten at dumping")
         
         # update namelists
         if previous_run is not None:
@@ -115,7 +115,7 @@ class Run:
         # dumping directory
         if os.path.isdir(self._dump_dir):
             os.rmdir(self._dump_dir)
-            os.mkdirs(self._dump_dir, exist_ok=True)
+            os.makedirs(self._dump_dir, exist_ok=True)
         
         # dump namelists
         self._cfg["namrun"]["nn_itend"] = self._ite
@@ -124,11 +124,11 @@ class Run:
         # save run files
         shutil.copy( "ocean.output", self._dump_dir + "/ocean.output." + self._label )
 
-        for file in glob.glob( self._nml_itm("cn_exp") + "*.nc") ):
+        for file in glob.glob( self._nml_itm("cn_exp") + "*.nc"):
             # restart - rename
             if "restart" in file:
                 new_name = file.replace( self._nml_itm("cn_exp") + f"_{self._ite-1:08d}_" , "")
-                shutil.move( file, os.path.join(dump_dir,new_name) )
+                shutil.move( file, os.path.join(self._dump_dir,new_name) )
         
             # results
             else:
@@ -193,7 +193,7 @@ class Run:
         for nml in [ self._cfg, self._ref, self._ice_cfg, self._ice_ref ]:
             item_val = [ gr2 for gr1,gr2 in nml.groups() if item_label.lower() in gr1 ]
             if len(item_val) != 0:
-                return item[0]
+                return item_val[0]
 
         print(f"Item {item_label} not found in {self._label} namelists")
         return None
