@@ -41,7 +41,7 @@ class Run:
         # ICE
         if self._nml_itm("nn_ice") == 2 :
             it0 = self._nml_itm("nn_it000")
-            fsbc = self._nml_itm("fsbc")
+            fsbc = self._nml_itm("nn_fsbc")
 
             if (self._ite - it0) % fsbc == 0:
                 min_ice = self._ite + (self._ite - it0) % fsbc + 2*fsbc - 1
@@ -69,7 +69,7 @@ class Run:
         # dumping directory
         self._dump_dir = os.path.join(os.getcwd(),self._label)
         if os.path.isdir(self._dump_dir):
-            print(f"Warning: directory {dump_dir} exists and will be overwritten at dumping")
+            print(f"Warning: directory {self._dump_dir} exists and will be overwritten at dumping")
         
         # update namelists
         if previous_run is not None:
@@ -83,7 +83,7 @@ class Run:
                 self._cfg["namrun"]["cn_ocerst_in"] = "restart"
                 self._cfg["namrun"]["cn_ocerst_indir"] = restart_dir
                 self._cfg["namrun"]["nn_it000"] = self._nml_itm("nn_itend") + 1
-                self._ice_cfg["namrun"]["cn_icerst_in"] = "restart_ice"
+                self._ice_cfg["nampar"]["cn_icerst_in"] = "restart_ice"
                 self._ice_cfg["nampar"]["cn_icerst_indir"] = restart_dir
         else:
             self._read_all_nml()
@@ -114,15 +114,18 @@ class Run:
         """ ... """
         # dumping directory
         if os.path.isdir(self._dump_dir):
-            os.rmdir(self._dump_dir)
-            os.makedirs(self._dump_dir, exist_ok=True)
+            shutil.rmtree(self._dump_dir)
+        os.makedirs(self._dump_dir, exist_ok=True)
         
         # dump namelists
         self._cfg["namrun"]["nn_itend"] = self._ite
         self._write_all_nml( self._dump_dir, "." + self._label )
 
         # save run files
-        shutil.copy( "ocean.output", self._dump_dir + "/ocean.output." + self._label )
+        try:
+            shutil.copy( "ocean.output", self._dump_dir + "/ocean.output." + self._label )
+        except: 
+            None
 
         for file in glob.glob( self._nml_itm("cn_exp") + "*.nc"):
             # restart - rename
