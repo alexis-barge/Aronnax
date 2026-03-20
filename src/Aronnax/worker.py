@@ -45,8 +45,8 @@ def main():
 
 
             elif cmd["cmd"] == "advance":
-                info = nemo_py_bind.nemo_advance(cmd["ite_start"], cmd["ite_end"], cmd["rst"])
-                send_response({"status": "ok", "result": info})
+                info, date = nemo_py_bind.nemo_advance(cmd["ite_start"], cmd["ite_end"], cmd["rst"])
+                send_response({"status": "ok", "info": info, "date": date})
 
 
             elif cmd["cmd"] == "finalize":
@@ -107,7 +107,7 @@ def main():
                 send_response({"status": "ok"})
 
 
-        except Exception:
+        except:
             send_response({"status": "error", "traceback": traceback.format_exc()})
 
     MPI.Finalize()

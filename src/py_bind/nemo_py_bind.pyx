@@ -6,7 +6,7 @@ import numpy as np
 
 """ Import Fortran interface - nogil since Fortran does not manipulate Python objects """
 cdef extern void c_nemo_init(int *klocalcomm, int *kit000, int *kdastp) nogil
-cdef extern void c_nemo_advance(int *kite_start, int *kite_end, int *ld_rst, int *kinfo) nogil
+cdef extern void c_nemo_advance(int *kite_start, int *kite_end, int *ld_rst, int *kdastp, int *kinfo) nogil
 cdef extern void c_nemo_get_size(const char **cd_varname_c, int *knx, int *kny, int *knz) nogil
 cdef extern void c_nemo_get_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval) nogil
 cdef extern void c_nemo_set_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval) nogil
@@ -44,13 +44,14 @@ def nemo_advance(ite_start,ite_end,rst):
     cdef int kite_start = ite_start
     cdef int kite_end = ite_end 
     cdef int ld_rst = rst
+    cdef int kdastp = 0
     cdef int kinfo = 0
 
     # call
     with nogil:
-        c_nemo_advance(&kite_start, &kite_end, &ld_rst, &kinfo)
+        c_nemo_advance(&kite_start, &kite_end, &ld_rst, &kdastp, &kinfo)
 
-    return kinfo
+    return kinfo, kdastp
 
 
 def nemo_get_val(varname):

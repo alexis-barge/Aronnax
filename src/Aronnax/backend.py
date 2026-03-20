@@ -97,7 +97,7 @@ class MPIBackend:
         
         if result["status"] == "error":
             raise RuntimeError(result.get("traceback", "Worker could not run 'advance'"))
-        return result["result"]
+        return result["info"], result["date"]
 
 
     def finalize(self):

@@ -18,7 +18,7 @@ class Run:
         
         self._label = label
         self._lock = False
-        self.copy_from(None)
+        self.start_from(None)
 
 
     def format_date(self):
@@ -61,11 +61,15 @@ class Run:
         return max( rst_oce, rst_ice )
 
 
-    def copy_from(self, previous_run):
+    def start_from(self, previous_run):
         """ 
         ... 
         
         """
+        # do nothing if locked
+        if self._lock:
+            return
+
         # dumping directory
         self._dump_dir = os.path.join(os.getcwd(),self._label)
         if os.path.isdir(self._dump_dir):
@@ -92,10 +96,12 @@ class Run:
                   
         self._cfg["namrun"]["cn_exp"] = self._label
         self._cfg["namrun"]["cn_ocerst_out"] = "restart"
-        self._cfg["namrun"]["cn_ocerst_outdir"] = self._dump_dir
-        self._cfg["namrun"]["nn_itend"] = self._nml_itm("nn_it000") + 1000000 
+        self._cfg["namrun"]["cn_ocerst_outdir"] = "./"
         self._ice_cfg["nampar"]["cn_icerst_out"] = "restart_ice"
-        self._ice_cfg["nampar"]["cn_icerst_outdir"] = self._dump_dir
+        self._ice_cfg["nampar"]["cn_icerst_outdir"] = "./"
+        # end iteration is highest possible value, modulo fsbc
+        self._cfg["namrun"]["nn_itend"] = int( (2**31-1) / self._nml_itm("rn_Dt") ) + self._nml_itm("nn_it000") - 1
+        self._cfg["namrun"]["nn_itend"] -= self._cfg["namrun"]["nn_itend"] % self._nml_itm("nn_fsbc")  
 
         # (re)init
         self.reset()
@@ -103,6 +109,10 @@ class Run:
 
     def reset(self):
         """ ... """
+        # do nothing if locked
+        if self._lock:
+            return
+
         self._ite = self._nml_itm("nn_it000")
         self._step = self._nml_itm("rn_Dt")
         self._time = 0.0
@@ -135,7 +145,7 @@ class Run:
         
             # results
             else:
-                shutil.move( file, dump_dir )
+                shutil.move( file, self._dump_dir )
 
 
     def _read_all_nml(self, nml_dir=os.getcwd(), suffix=""):

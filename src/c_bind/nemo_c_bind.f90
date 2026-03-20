@@ -20,13 +20,15 @@ SUBROUTINE c_nemo_init(klocal_comm,kit000,kdastp) BIND(C)
       
       ! API - return starting iteration
       CALL nemo_api_init(klocal_comm)
+
+      ! Outputs
       kit000 = nit000
       kdastp = ndastp
       
 END SUBROUTINE c_nemo_init
 
 
-SUBROUTINE c_nemo_advance(kite_start,kite_end,ld_rst,kinfo) BIND(C)
+SUBROUTINE c_nemo_advance(kite_start,kite_end,ld_rst,kdastp,kinfo) BIND(C)
       !!----------------------------------------------------------------------
       !!                     ***  ROUTINE c_nemo_init  ***
       !!
@@ -41,7 +43,7 @@ SUBROUTINE c_nemo_advance(kite_start,kite_end,ld_rst,kinfo) BIND(C)
       ! I/O
       INTEGER (c_int), INTENT(IN)  ::   kite_end, kite_start ! number of time iteration
       INTEGER (c_int), INTENT(IN)  ::   ld_rst               ! write restart at kite_end
-      INTEGER (c_int), INTENT(OUT) ::   kinfo
+      INTEGER (c_int), INTENT(OUT) ::   kinfo, kdastp
       ! Local variables
       !!----------------------------------------------------------------------
       
@@ -50,9 +52,12 @@ SUBROUTINE c_nemo_advance(kite_start,kite_end,ld_rst,kinfo) BIND(C)
 
       ! API - return error flag
       CALL nemo_api_advance(kite_start,kite_end)
-      kinfo = nstop
 
       IF ( ld_rst == 1 ) nitrst = nitend
+
+      ! Outputs
+      kdastp = ndastp
+      kinfo = nstop
 
 END SUBROUTINE c_nemo_advance
 

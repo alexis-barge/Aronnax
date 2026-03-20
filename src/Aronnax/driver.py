@@ -13,7 +13,7 @@ class NEMO:
     ----------
 
     """
-    def __init__(self, config='ORCA1', debug=False, nproc=1, verbose=True):
+    def __init__(self, config='ORCA1', debug=True, nproc=1, verbose=True):
 
         self._backend = MPIBackend(nproc=nproc, verbose=verbose)
         self._config = config
@@ -35,7 +35,7 @@ class NEMO:
         message = ( f"Run {self._run._label}: {status}{err}\n"
                     f"    - Current iteration: {self._run._ite}\n"
                     f"    - Simulated time: {self._run.format_date()}\n"
-                    f"    - Current date: {self._run.date} from {self._run.date0}"
+                    f"    - Current date: {self._run._date} from {self._run._date0}"
                   )
         return message
 
@@ -45,10 +45,10 @@ class NEMO:
         return self._backend.process is not None
 
 
-    def start_from(self, previous_run):
+    def set_previous_run(self, previous_run):
         """ ... """
         if not self.is_running():
-            self._run.copy_from(previous_run)
+            self._run.start_from(previous_run)
 
 
     def set_run(self, run_to_set):
@@ -62,12 +62,20 @@ class NEMO:
     def start(self):
         """ Start NEMO initialization """
         if not self.is_running():
-            self._run._lock = True
             self._run._write_all_nml()
             self._run.reset()
-            self._backend.start_workers()
-            self._run._ite, self._run._date = self._backend.init()
-            self._error = False
+            
+            # NEMO workers
+            try:
+                self._backend.start_workers()
+                self._run._ite, self._run._date = self._backend.init()
+                self._error = False
+                self._run._lock = True
+            except Exception as e:
+                print(e)
+
+            # Print status
+            print(self)
 
 
     def finish(self,write_restart=False):
@@ -75,11 +83,12 @@ class NEMO:
         if self.is_running():
             if write_restart:
                 self.advance(write_restart=write_restart)
-                self._run.dump()
+                if not self._error:
+                    self._run.dump()
 
+            self._run._lock = False
             self._backend.finalize()
             self._backend.stop_workers()
-            self._run._lock = False
 
 
     def restart(self):
@@ -88,13 +97,14 @@ class NEMO:
         self.finish(write_restart=True)
 
         # configure next run
-        self._segment += 1 
-        previous_label = self._run._label
-        self._run._label = self._config + ".seg0" + str(self._segment)
-        self._run.copy_from(previous_label)
+        if not self._error:
+            self._segment += 1 
+            previous_label = self._run._label
+            self._run._label = self._config + ".seg0" + str(self._segment)
+            self._run.copy_from(previous_label)
         
-        # reset NEMO
-        self.start()
+            # reset NEMO
+            self.start()
 
 
     def advance(self, ite=0, years=0, months=0, days=0, write_restart=False):
@@ -117,7 +127,8 @@ class NEMO:
             # compute
             try:
                 info, date = self._backend.advance(self._run._ite, final_ite, int(write_restart))
-            except:
+            except Exception as e:
+                print(e)
                 info = 1
 
             # check status
@@ -133,7 +144,12 @@ class NEMO:
                 for fld in self.fields:
                     fld.free() if not fld.save else None
             
-            print(self)
+        # print status
+        print(self)
+        if write_restart and self._error:
+            print(f"    - Restart procedure aborted")
+        elif write_restart:
+            print(f"    - Restart procedure successful")
 
 
     def field(self,varname,save=False):
