@@ -18,6 +18,31 @@ class Run:
         
         self._label = label
         self._lock = False
+
+        # dumping directory - rename Run if dir exists and contains results
+        self._dump_dir = os.path.join(os.getcwd(), label)
+
+        for nb in range(50):
+            if os.path.isdir(self._dump_dir):
+                files = [f for f in os.listdir(self._dump_dir) if f.startswith(self._label[:11])]
+
+                if files:    
+                    print(f"Warning: Run directory {self._dump_dir} exists")
+                    self._label = label + f"_namesake{nb:02d}" 
+                    self._dump_dir = os.path.join(os.getcwd(),self._label)
+                else:
+                    break
+            
+            elif os.path.isdir(self._dump_dir + ".FAILED"):
+                print(f"Warning: Run directory {self._dump_dir} exists")
+                self._label = label + f"_namesake{nb:02d}" 
+                self._dump_dir = os.path.join(os.getcwd(),self._label)
+            
+            else:
+                break
+
+        print(f"         Run name has been set to {self._label}")
+        os.makedirs( self._dump_dir , exist_ok=True)
         self.start_from(None)
 
 
@@ -69,13 +94,8 @@ class Run:
         # do nothing if locked
         if self._lock:
             return
-
-        # dumping directory
-        self._dump_dir = os.path.join(os.getcwd(),self._label)
-        if os.path.isdir(self._dump_dir):
-            print(f"Warning: directory {self._dump_dir} exists and will be overwritten at dumping")
         
-        # update namelists
+        # update namelists from starting point
         if previous_run is not None:
             restart_dir = os.path.join( os.getcwd(), previous_run )
             if not os.path.isdir( restart_dir ):
@@ -84,10 +104,10 @@ class Run:
             else:
                 self._read_all_nml( restart_dir , "." + previous_run )
                 self._cfg["namrun"]["ln_rstart"] = True
-                self._cfg["namrun"]["cn_ocerst_in"] = "restart"
+                self._cfg["namrun"]["cn_ocerst_in"] = f"{self._nml_itm('cn_exp')}_{self._nml_itm('nn_itend'):08d}_restart"
                 self._cfg["namrun"]["cn_ocerst_indir"] = restart_dir
                 self._cfg["namrun"]["nn_it000"] = self._nml_itm("nn_itend") + 1
-                self._ice_cfg["nampar"]["cn_icerst_in"] = "restart_ice"
+                self._ice_cfg["nampar"]["cn_icerst_in"] = f"{self._nml_itm('cn_exp')}_{self._nml_itm('nn_itend'):08d}_restart_ice"
                 self._ice_cfg["nampar"]["cn_icerst_indir"] = restart_dir
         else:
             self._read_all_nml()
@@ -96,9 +116,9 @@ class Run:
                   
         self._cfg["namrun"]["cn_exp"] = self._label
         self._cfg["namrun"]["cn_ocerst_out"] = "restart"
-        self._cfg["namrun"]["cn_ocerst_outdir"] = "./"
+        self._cfg["namrun"]["cn_ocerst_outdir"] = self._dump_dir
         self._ice_cfg["nampar"]["cn_icerst_out"] = "restart_ice"
-        self._ice_cfg["nampar"]["cn_icerst_outdir"] = "./"
+        self._ice_cfg["nampar"]["cn_icerst_outdir"] = self._dump_dir
         # end iteration is highest possible value, modulo fsbc
         self._cfg["namrun"]["nn_itend"] = int( (2**31-1) / self._nml_itm("rn_Dt") ) + self._nml_itm("nn_it000") - 1
         self._cfg["namrun"]["nn_itend"] -= self._cfg["namrun"]["nn_itend"] % self._nml_itm("nn_fsbc")  
@@ -109,43 +129,28 @@ class Run:
 
     def reset(self):
         """ ... """
-        # do nothing if locked
-        if self._lock:
-            return
-
-        self._ite = self._nml_itm("nn_it000")
-        self._step = self._nml_itm("rn_Dt")
-        self._time = 0.0
-        self._date = None
-        self._date0 = self._nml_itm("nn_date0")
+        if not self._lock:
+            self._ite = self._nml_itm("nn_it000")
+            self._step = self._nml_itm("rn_Dt")
+            self._time = 0.0
+            self._date = None
+            self._date0 = self._nml_itm("nn_date0")
 
 
-    def dump(self):
+    def dump(self,error_dump):
         """ ... """
-        # dumping directory
-        if os.path.isdir(self._dump_dir):
-            shutil.rmtree(self._dump_dir)
-        os.makedirs(self._dump_dir, exist_ok=True)
-        
         # dump namelists
         self._cfg["namrun"]["nn_itend"] = self._ite
         self._write_all_nml( self._dump_dir, "." + self._label )
 
-        # save run files
-        try:
-            shutil.copy( "ocean.output", self._dump_dir + "/ocean.output." + self._label )
-        except: 
-            None
-
+        # run files and results
+        shutil.copy( "ocean.output", self._dump_dir + "/ocean.output." + self._label )
         for file in glob.glob( self._nml_itm("cn_exp") + "*.nc"):
-            # restart - rename
-            if "restart" in file:
-                new_name = file.replace( self._nml_itm("cn_exp") + f"_{self._ite-1:08d}_" , "")
-                shutil.move( file, os.path.join(self._dump_dir,new_name) )
-        
-            # results
-            else:
-                shutil.move( file, self._dump_dir )
+            shutil.move( file, self._dump_dir )
+
+        # Change directory name if error
+        if error_dump:
+            os.rename( self._dump_dir, self._dump_dir + ".FAILED" )
 
 
     def _read_all_nml(self, nml_dir=os.getcwd(), suffix=""):
