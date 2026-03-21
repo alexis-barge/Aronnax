@@ -13,7 +13,7 @@ class NEMO:
     ----------
 
     """
-    def __init__(self, config='ORCA1', debug=True, nproc=1, verbose=True):
+    def __init__(self, config="MY_NEMO_CFG", debug=False, nproc=1, verbose=True):
 
         self._backend = MPIBackend(nproc=nproc, verbose=verbose)
         self._config = config
@@ -22,7 +22,8 @@ class NEMO:
         self.fields = []
         self._segment = 0
         self._run = Run(config + ".seg0" + str(self._segment))
-
+        # Warning -- debug mode marche pas en parallele
+        # Gérer la question de la nomination des runs depuis le driver
 
     def __del__(self):
         """ Properly stops NEMO workers """
@@ -81,14 +82,20 @@ class NEMO:
     def finish(self,write_restart=False):
         """ Finalization routines: terminates NEMO program and the worker """
         if self.is_running():
+            # write restart 
             if write_restart:
                 self.advance(write_restart=write_restart)
-                if not self._error:
-                    self._run.dump()
-
-            self._run._lock = False
-            self._backend.finalize()
+       
+            # stop workers
+            try:
+                self._backend.finalize()
+            except Exception as e:
+                print(e)
             self._backend.stop_workers()
+        
+        # dump run
+        self._run.dump(self._error)
+        self._run._lock = False
 
 
     def restart(self):

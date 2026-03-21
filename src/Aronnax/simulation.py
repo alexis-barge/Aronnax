@@ -23,9 +23,9 @@ class Run:
         self._dump_dir = os.path.join(os.getcwd(), label)
 
         for nb in range(50):
+
             if os.path.isdir(self._dump_dir):
                 files = [f for f in os.listdir(self._dump_dir) if f.startswith(self._label[:11])]
-
                 if files:    
                     print(f"Warning: Run directory {self._dump_dir} exists")
                     self._label = label + f"_namesake{nb:02d}" 
@@ -143,14 +143,22 @@ class Run:
         self._cfg["namrun"]["nn_itend"] = self._ite
         self._write_all_nml( self._dump_dir, "." + self._label )
 
-        # run files and results
-        shutil.copy( "ocean.output", self._dump_dir + "/ocean.output." + self._label )
+        # run files
+        try:
+            shutil.copy( "ocean.output", self._dump_dir + "/ocean.output." + self._label )
+        except:
+            None
+
+        # results
         for file in glob.glob( self._nml_itm("cn_exp") + "*.nc"):
             shutil.move( file, self._dump_dir )
 
-        # Change directory name if error
-        if error_dump:
-            os.rename( self._dump_dir, self._dump_dir + ".FAILED" )
+        # change directory name if error
+        try: 
+            if error_dump:
+                os.rename( self._dump_dir, self._dump_dir + ".FAILED" )
+        except:
+            None
 
 
     def _read_all_nml(self, nml_dir=os.getcwd(), suffix=""):
@@ -199,7 +207,10 @@ class Run:
                 namelist file name
 
         """
-        f90nml.write(nml,output_file,force=True)
+        try:
+            f90nml.write(nml,output_file,force=True)
+        except:
+            None
 
 
     def _nml_itm(self, item_label):
