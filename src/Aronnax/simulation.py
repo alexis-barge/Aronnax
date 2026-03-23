@@ -114,7 +114,6 @@ class Run:
                 # check restart files
                 rst_prefix = f"{self._nml_itm('cn_exp')}_{self._nml_itm('nn_itend'):08d}_restart"
                 rst_files = glob.glob(f"{restart_dir}/{rst_prefix}*")
-                print(rst_prefix, rst_files)
                 if len(rst_files) == 0:
                     print(f"Warning: No restart files in directory {restart_dir} - skipped")
                     return
@@ -162,7 +161,7 @@ class Run:
     def dump(self,error_dump):
         """ ... """
         # namelists
-        self._cfg["namrun"]["nn_itend"] = self._ite
+        self._cfg["namrun"]["nn_itend"] = self._ite - 1
         self._write_all_nml( self._dump_dir, "." + self._label )
 
         # run files

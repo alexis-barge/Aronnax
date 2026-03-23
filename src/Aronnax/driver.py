@@ -51,9 +51,10 @@ class NEMO:
         if not self._error and not self.is_running():
             
             if fork is not None:
+                self._config = fork
                 self._segment = 0
             
-            self.run = Run(fork + ".seg0" + str(self._segment))
+            self.run = Run(self._config + ".seg0" + str(self._segment))
             self.run.init_from(previous_run)
 
 
