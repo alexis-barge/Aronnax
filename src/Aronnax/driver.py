@@ -21,9 +21,9 @@ class NEMO:
         self._error = False
         self.fields = []
         self._segment = 0
-        self._run = Run(config + ".seg0" + str(self._segment))
+        self.run = Run(self._config + ".seg0" + str(self._segment))
         # Warning -- debug mode marche pas en parallele
-        # Gérer la question de la nomination des runs depuis le driver
+
 
     def __del__(self):
         """ Properly stops NEMO workers """
@@ -33,10 +33,10 @@ class NEMO:
     def __str__(self):
         status = "ONLINE" if self.is_running() else "OFFLINE"
         err = " - OK " if not self._error else " - FAILED: check ocean.output logs"
-        message = ( f"Run {self._run._label}: {status}{err}\n"
-                    f"    - Current iteration: {self._run._ite}\n"
-                    f"    - Simulated time: {self._run.format_date()}\n"
-                    f"    - Current date: {self._run._date} from {self._run._date0}"
+        message = ( f"Run {self.run._label}: {status}{err}\n"
+                    f"    - Current iteration: {self.run._ite}\n"
+                    f"    - Simulated time: {self.run.format_date()}\n"
+                    f"    - Current date: {self.run._date} from {self.run._date0}"
                   )
         return message
 
@@ -46,32 +46,36 @@ class NEMO:
         return self._backend.process is not None
 
 
-    def set_previous_run(self, previous_run):
+    def run_from(self, previous_run, fork=None):
         """ ... """
-        if not self.is_running():
-            self._run.start_from(previous_run)
+        if not self._error and not self.is_running():
+            
+            if fork is not None:
+                self._segment = 0
+            
+            self.run = Run(fork + ".seg0" + str(self._segment))
+            self.run.init_from(previous_run)
 
 
-    def set_run(self, run_to_set):
+    def set_next_run(self):
         """ ... """
-        if not self.is_running():
-            self._config = run_to_set._label
-            self._segment = 0
-            self._run = run_to_set
+        if not self._error and not self.is_running():
+            self._segment += 1
+            self.run_from(self.run._label)
 
 
     def start(self):
         """ Start NEMO initialization """
         if not self.is_running():
-            self._run._write_all_nml()
-            self._run.reset()
+            self.run.reset()
+            self.run._write_all_nml()
             
             # NEMO workers
             try:
                 self._backend.start_workers()
-                self._run._ite, self._run._date = self._backend.init()
+                self.run._ite, self.run._date = self._backend.init()
                 self._error = False
-                self._run._lock = True
+                self.run._lock = True
             except Exception as e:
                 print(e)
 
@@ -94,8 +98,8 @@ class NEMO:
             self._backend.stop_workers()
         
         # dump run
-        self._run.dump(self._error)
-        self._run._lock = False
+        self.run.dump(self._error)
+        self.run._lock = False
 
 
     def restart(self):
@@ -104,13 +108,10 @@ class NEMO:
         self.finish(write_restart=True)
 
         # configure next run
-        if not self._error:
-            self._segment += 1 
-            previous_label = self._run._label
-            self._run._label = self._config + ".seg0" + str(self._segment)
-            self._run.copy_from(previous_label)
+        self.set_next_run()
         
-            # reset NEMO
+        # reset NEMO
+        if not self._error:
             self.start()
 
 
@@ -123,17 +124,17 @@ class NEMO:
             if total_time == 0.0 and ite == 0:
                 total_ite = 1
             else:
-                total_ite = int(ite) + int(total_time / self._run._step)
-            final_ite = self._run._ite + total_ite - 1
+                total_ite = int(ite) + int(total_time / self.run._step)
+            final_ite = self.run._ite + total_ite - 1
 
             # adjust for restart
             if write_restart:
-                final_ite = self._run.next_restart(final_ite)
-                total_ite = final_ite - self._run._ite + 1
+                final_ite = self.run.next_restart_ite(final_ite)
+                total_ite = final_ite - self.run._ite + 1
 
             # compute
             try:
-                info, date = self._backend.advance(self._run._ite, final_ite, int(write_restart))
+                info, date = self._backend.advance(self.run._ite, final_ite, int(write_restart))
             except Exception as e:
                 print(e)
                 info = 1
@@ -143,9 +144,9 @@ class NEMO:
                 self._error = True
                 self.finish() if not self.debug else None
             else:
-                self._run._time += total_ite * self._run._step 
-                self._run._ite += total_ite
-                self._run._date = date
+                self.run._time += total_ite * self.run._step 
+                self.run._ite += total_ite
+                self.run._date = date
 
                 # clear field memory
                 for fld in self.fields:
