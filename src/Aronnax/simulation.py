@@ -210,12 +210,7 @@ class Run:
                 namelist file name
 
         """
-        try:
-            nml = f90nml.read(nml_name)
-        except:
-            print(f"Fortran namelist {nml_name} not found")
-            nml = f90nml.Namelist()
-        return nml
+        return f90nml.read(nml_name)
 
 
     def _write_nml(self, nml, output_file):
@@ -231,7 +226,7 @@ class Run:
         try:
             f90nml.write(nml,output_file,force=True)
         except:
-            None
+            print(f"Writing namelists in Run directory failed -- skipped")
 
 
     def _nml_itm(self, item_label):
