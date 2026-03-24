@@ -57,7 +57,7 @@ cythonized_extensions = cythonize(
 # pyNENO package (include Cython wrapper and shared-NEMO)
 setup(
     name="Aronnax",
-    version="0.1.0",
+    version="0.5.0",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     ext_modules=cythonized_extensions,

@@ -22,7 +22,7 @@ autodoc_mock_imports = ['mpi4py','numpy','Cython']
 project = 'Aronnax'
 copyright = '2025, Barge Alexis, Le Sommer Julien'
 author = 'Barge Alexis, Le Sommer Julien'
-release = '0.1.0'
+release = '0.5.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

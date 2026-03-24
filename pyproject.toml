@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Aronnax"
-version = "0.0.1"
+version = "0.5.0"
 description = "Python wrapper for the ocean GCM NEMO"
 authors = [ { name="Alexis Barge", email="alexis.barge@proton.me" }, 
 	    { name = "Julien Le Sommer", email = "julien.lesommer@univ-grenoble-alpes.fr" },]
@@ -25,6 +25,8 @@ dependencies = [
 	"Cython>=3.0.8",
 	"numpy>=1.21.0",
 	"mpi4py>=3.1.5",
+        "cloudpickle>=3.1.2",
+	"f90nml>=1.5.0",
 ]
 
 
