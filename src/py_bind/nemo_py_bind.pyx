@@ -92,7 +92,7 @@ def nemo_set_val(varname,val):
     c_nemo_get_size(&cd_varname_c,&nx,&ny,&nz)
 
     if val.shape != (nx,ny,nz):
-        raise TypeError(f"Cython layer -- nemo_set_val: array size {val.shape} to set does not match {varname} NEMO size")
+        raise TypeError(f"Cython layer -- nemo_set_val: array size {val.shape} to set does not match {varname} NEMO size ({nx},{ny},{nz})")
 
     # call
     with nogil:

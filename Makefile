@@ -7,6 +7,7 @@ CPP_FCM      := $(WRAPPER_HOME)/../BLD/cpp.fcm
 ARCH         := arch_nemo.mk
 
 NEMO_LIB     := libnemo.so
+TEST_LIB     := libnemo_test.so
 
 export SRC_DIR      = $(WRAPPER_HOME)/src/c_bind
 export OBJ_DIR      = $(WRAPPER_HOME)/build/fortran
@@ -18,6 +19,7 @@ export NEMO_OBJ_DIR = $(WRAPPER_HOME)/../BLD/obj
 
 NEMO_OBJ = $(wildcard $(NEMO_OBJ_DIR)/*.o)
 OBJ = nemo_api.o utils.o nemo_c_bind.o 
+TEST_OBJ = test_nemo_c_bind.o
 
 ###########################################
 ###########################################
@@ -32,7 +34,7 @@ all: $(ARCH)
 		$(MAKE) --no-print-directory build; \
 	fi
 
-build: dirs $(NEMO_LIB)
+build: dirs $(NEMO_LIB) $(TEST_LIB)
 
 
 ## ---------------------------------------
@@ -58,6 +60,11 @@ dirs:
 $(NEMO_LIB): $(OBJ)
 	$(FC) -shared $(FFLAGS) -o $(LIB_DIR)/$@ $(addprefix $(OBJ_DIR)/,$^) $(NEMO_OBJ) $(USER_LIB)
 	@echo "      > DONE shared NEMO"
+	@echo "   -------------------------------"
+
+$(TEST_LIB): $(TEST_OBJ)
+	$(FC) -shared $(FFLAGS) -o $(LIB_DIR)/$@ $(addprefix $(OBJ_DIR)/,$^)
+	@echo "      > DONE test compilation"
 	@echo "   -------------------------------"
 
 %.o: $(SRC_DIR)/%.f90

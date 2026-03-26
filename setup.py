@@ -20,7 +20,7 @@ class BuildExtWithMake(build_ext):
         lib_dir = os.path.abspath("build/lib")
         os.makedirs(lib_dir, exist_ok=True)
 
-        # Compile libnemo.so with Makefile
+        # Compile libnemo.so and libnemo_test.so with Makefile
         subprocess.check_call(["make", f"LIB_DIR={lib_dir}"])
 
         # Compile Cython wrapper
@@ -30,15 +30,29 @@ class BuildExtWithMake(build_ext):
         build_Aronnax_dir = os.path.join(self.build_lib, "Aronnax")
         os.makedirs(build_Aronnax_dir, exist_ok=True)
         shutil.copy2(os.path.join(lib_dir, "libnemo.so"), build_Aronnax_dir)
+        shutil.copy2(os.path.join(lib_dir, "libnemo_test.so"), build_Aronnax_dir)
 
 
 # Cython compilation
 extensions = [
+    # production
     Extension(
         "Aronnax.nemo_py_bind",                     
         sources=["src/py_bind/nemo_py_bind.pyx"],  
         libraries=["nemo"],                        
         library_dirs=["build/lib"],                
+        runtime_library_dirs=["$ORIGIN"],
+        include_dirs=[numpy.get_include()],
+        extra_compile_args=["-O3", "-fPIC"],
+        extra_link_args=["-Wl,-rpath,$ORIGIN"],
+        language="c",
+    ),
+    # test
+    Extension(
+        "Aronnax.test_nemo_py_bind",
+        sources=["src/py_bind/test_nemo_py_bind.pyx"],  
+        libraries=["nemo_test"],                   
+        library_dirs=["build/lib"],
         runtime_library_dirs=["$ORIGIN"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=["-O3", "-fPIC"],
