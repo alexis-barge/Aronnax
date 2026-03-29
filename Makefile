@@ -19,7 +19,7 @@ export NEMO_OBJ_DIR = $(WRAPPER_HOME)/../BLD/obj
 
 NEMO_OBJ = $(wildcard $(NEMO_OBJ_DIR)/*.o)
 OBJ = nemo_api.o utils.o nemo_c_bind.o 
-TEST_OBJ = test_nemo_c_bind.o
+TEST_OBJ = test_nemo_py_bind.o
 
 ###########################################
 ###########################################

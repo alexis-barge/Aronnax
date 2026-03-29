@@ -62,25 +62,31 @@ SUBROUTINE c_nemo_advance(kite_start,kite_end,ld_rst,kdastp,kinfo) BIND(C)
 END SUBROUTINE c_nemo_advance
 
 
-SUBROUTINE c_nemo_finalization() BIND(C)
+SUBROUTINE c_nemo_finalization(kerr) BIND(C)
       !!----------------------------------------------------------------------
       !!                     ***  ROUTINE c_nemo_finalization  ***
       !!
       !! ** Purpose :   C interface for NEMO finalization
       !!----------------------------------------------------------------------
+      USE iso_c_binding, ONLY: c_int
       USE nemo_api
 
       IMPLICIT NONE
 
       !!----------------------------------------------------------------------
       ! I/O
+      INTEGER (c_int), INTENT(OUT) :: kerr
       ! Local variables
       !!----------------------------------------------------------------------
-      ! convert
+ 
+      kerr = 1
 
       ! API
       CALL nemo_api_finalization(0)
       
+      ! Outputs
+      kerr = 0
+
 END SUBROUTINE c_nemo_finalization
 
 
@@ -165,7 +171,7 @@ SUBROUTINE c_nemo_get_val(cd_varname_c,knx,kny,knz,pval) BIND(C)
 ENd SUBROUTINE c_nemo_get_val
 
 
-SUBROUTINE c_nemo_set_val(cd_varname_c,knx,kny,knz,pval) BIND(C)
+SUBROUTINE c_nemo_set_val(cd_varname_c,knx,kny,knz,pval,kerr) BIND(C)
       !!----------------------------------------------------------------------
       !!                     ***  ROUTINE c_nemo_get  ***
       !!
@@ -181,6 +187,7 @@ SUBROUTINE c_nemo_set_val(cd_varname_c,knx,kny,knz,pval) BIND(C)
       ! I/O
       TYPE (c_ptr), INTENT(IN) :: cd_varname_c
       INTEGER (c_int), INTENT(IN) :: knx, kny, knz
+      INTEGER (c_int), INTENT(OUT) :: kerr
       REAL (c_double), INTENT(IN) :: pval(knx,kny,knz)
       ! Local variables
       CHARACTER(len=:), ALLOCATABLE :: cd_varname_f
@@ -193,6 +200,7 @@ SUBROUTINE c_nemo_set_val(cd_varname_c,knx,kny,knz,pval) BIND(C)
       buffer = REAL( pval, kind=wp )
 
       ! Default value
+      kerr = 1
       kdimt = Nbb
       
       ! Set
@@ -204,5 +212,8 @@ SUBROUTINE c_nemo_set_val(cd_varname_c,knx,kny,knz,pval) BIND(C)
 #undef field
 
       END SELECT
+
+      ! Outputs
+      kerr = 0
 
 END SUBROUTINE c_nemo_set_val

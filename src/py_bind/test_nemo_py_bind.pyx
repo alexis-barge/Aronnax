@@ -9,8 +9,8 @@ cdef extern void c_nemo_init(int *klocalcomm, int *kit000, int *kdastp) nogil
 cdef extern void c_nemo_advance(int *kite_start, int *kite_end, int *ld_rst, int *kdastp, int *kinfo) nogil
 cdef extern void c_nemo_get_size(const char **cd_varname_c, int *knx, int *kny, int *knz) nogil
 cdef extern void c_nemo_get_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval) nogil
-cdef extern void c_nemo_set_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval, int* kerr) nogil
-cdef extern void c_nemo_finalization() nogil
+cdef extern void c_nemo_set_val(const char **cd_varname_c, int *knx, int *kny, int *knz, double *pval, int *kerr) nogil
+cdef extern void c_nemo_finalization(int *kerr) nogil
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -102,6 +102,11 @@ def nemo_set_val(varname,val):
     return err
 
 def nemo_finalization():
+    # convert
+    cdef int err
+
     # call
     with nogil:
-        c_nemo_finalization()
+        c_nemo_finalization(&err)
+
+    return err

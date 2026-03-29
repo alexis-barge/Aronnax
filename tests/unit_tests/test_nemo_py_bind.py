@@ -52,6 +52,11 @@ def test_nemo_advance():
     assert date == -1
 
 
+def test_nemo_finalization():
+    err = nemo_py_bind.nemo_finalization()
+    assert err == 0
+
+
 def test_get_val():
     try:
         val = nemo_py_bind.nemo_get_val(5)
