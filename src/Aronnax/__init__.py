@@ -17,3 +17,4 @@ from .driver import *
 from .backend import *
 from .field import *
 from .simulation import *
+from .build_info import __nemo_bld__
