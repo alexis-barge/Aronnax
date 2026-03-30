@@ -12,22 +12,26 @@ class BuildExtWithMake(build_ext):
     """
     Custom build_ext:
     - compile libnemo.so with Makefile
-    - copy libnemo.so into the *build/lib*/Aronnax/ folder (not src/)
-    - then build the Cython extension
+    - build the Cython extension
     """
     def run(self):
-        # Reset
+        # Reset build
         if os.path.isfile("build/arch_nemo.mk"):
             os.remove("build/arch_nemo.mk")
 
-        # build dir
+        # Build dir
         lib_dir = os.path.abspath("build/lib")
         os.makedirs(lib_dir, exist_ok=True)
 
+        # Check NEMO config
+        nemo_bld = os.environ.get("NEMO_BLD", f"{os.path.dirname(os.getcwd())}")
+        if not os.path.isfile( os.path.join( nemo_bld, "BLD", "arch_nemo.fcm" ) ):
+            raise Exception(f"=== NEMO config {nemo_bld} does not exist or has not been compiled ===")
+        
         # Compile libnemo.so and libnemo_test.so with Makefile
         subprocess.check_call(["make", f"LIB_DIR={lib_dir}"], env=os.environ.copy(), cwd=os.path.join( os.getcwd() , "src"))
 
-        # Compile Cython wrapper
+        # Compile Cython layer
         super().run()
 
         # Add libnemo.so in Aronnax package
@@ -37,7 +41,6 @@ class BuildExtWithMake(build_ext):
         shutil.copy2(os.path.join(lib_dir, "libnemo_test.so"), build_Aronnax_dir)
         
         # Add NEMO config path in Aronnax package
-        nemo_bld = os.environ.get("NEMO_BLD", f"{os.path.dirname(os.getcwd())}")
         build_info_file = os.path.join(build_Aronnax_dir, "build_info.py")
         with open(build_info_file, "w") as f:
             f.write(f'__nemo_bld__ = "{nemo_bld}"\n')
