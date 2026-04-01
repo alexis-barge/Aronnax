@@ -6,18 +6,16 @@ From: debian:bookworm-slim
 
 %environment
    export HOME=/home/jdoe
-   export PYLIB=$HOME/.local_python
+   export PYLIB=$HOME/host/aronnax_venv
    export ARCH="$(uname -m)-linux-gnu"
    export LD_LIBRARY_PATH=/usr/lib:/lib:$LD_LIBRARY_PATH
 
-%files
-   XIOS
 
 %post
    # Paths
    # -----
    export HOME=/home/jdoe
-   export PYLIB=$HOME/.local_python
+   export PYLIB=$HOME/host/aronnax_venv
    export ARCH="$(uname -m)-linux-gnu"
    mkdir -p $HOME
 
@@ -28,11 +26,6 @@ From: debian:bookworm-slim
                   openmpi-bin libopenmpi-dev libnetcdff-dev libnetcdf-dev \
                   python3.11 python3-venv pip
 
-   # Python environment
-   # ------------------
-   python3 -m venv $PYLIB
-   . .$PYLIB/bin/activate
-   pip install numpy==1.24.4 mpi4py==3.1.5 Cython==3.0.8
 
    # Install HDF5
    # ------------
@@ -56,7 +49,7 @@ From: debian:bookworm-slim
    ./configure --enable-parallel-tests --enable-netcdf-4 --enable-shared --prefix=/usr/lib/$ARCH/
    make
    make install
-   
+
    # Install netcdf-fortran
    # ----------------------
    cd $HOME
@@ -70,10 +63,11 @@ From: debian:bookworm-slim
    make
    make install
 
-   # Install XIOS without
-   # --------------------
-   cp -r /XIOS $HOME/XIOS
-   
+
+   # Install XIOS
+   # ------------
+   git clone -b XIOS2 https://gitlab.in2p3.fr/ipsl/projets/xios-projects/xios.git $HOME/XIOS
+
    rm $HOME/XIOS/arch/arch-GCC_LINUX.env
    echo "export INC_DIR=/usr/lib/$ARCH/include" >> $HOME/XIOS/arch/arch-GCC_LINUX.env
    echo "export LIB_DIR=/usr/lib/$ARCH/lib" >> $HOME/XIOS/arch/arch-GCC_LINUX.env
@@ -95,8 +89,12 @@ From: debian:bookworm-slim
    echo 'BOOST_LIBDIR="-L $BOOST_LIB_DIR"' >> $HOME/XIOS/arch/arch-GCC_LINUX.path
    echo 'BOOST_LIB=""' >> $HOME/XIOS/arch/arch-GCC_LINUX.path
 
+   sed -i 's/%CCOMPILER[[:space:]]\+mpicc/%CCOMPILER    mpicc -fPIC/' $HOME/XIOS/arch/arch-GCC_LINUX.fcm
+   sed -i 's/%FCOMPILER[[:space:]]\+mpif90/%FCOMPILER   mpif90 -fPIC/' $HOME/XIOS/arch/arch-GCC_LINUX.fcm
+
    cd $HOME/XIOS
    ./make_xios --full --prod --arch GCC_LINUX
+
 
    # clean
    # -----
@@ -106,13 +104,15 @@ From: debian:bookworm-slim
    apt-get clean
    rm -rf /var/lib/apt/lists/*
 
+
    # Build bashrc
    # ------------
    echo "# Python Env\n############" >> ~/.bashrc
+   echo "python3 -m venv $PYLIB" >> ~/.bashrc
    echo "source $PYLIB/bin/activate" >> ~/.bashrc
    echo "\n# Easier Life\n#############" >> ~/.bashrc
    echo "alias ls='ls --color=auto'" >> ~/.bashrc
    echo "alias grep='grep --color=auto -H'\n" >> ~/.bashrc
    echo "\n# Start\n#######" >> ~/.bashrc
-   echo "echo '>>>> Welcome in Morays environment ! <<<<'" >> ~/.bashrc
+   echo "echo '>>>> Welcome in Aronnax environment ! <<<<'" >> ~/.bashrc
    echo "cd $HOME" >> ~/.bashrc
