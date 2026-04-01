@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "CI_workflows" ]
+    branches: [ "v0.5.x" ]
   pull_request:
-    branches: [ "main" , "release" ]
+    branches: [ "v0.5.x" ]
 
 permissions:
   contents: write
@@ -28,12 +28,95 @@ jobs:
     - name: Set environment variables
       run: |
         echo "HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-        echo "HOME_OASIS=$GITHUB_WORKSPACE/nemo_v5.0.1" >> $GITHUB_ENV
+        echo "HOME_NEMO=$GITHUB_WORKSPACE/nemo_v5.0.1" >> $GITHUB_ENV
+        echo "ARCH=x86_64-linux-gnu" >> $GITHUB_ENV
+        echo "HOME_XIOS=$GITHUB_WORKSPACE/XIOS" >> $GITHUB_ENV
+
+    - name: Dev essential
+      run: |
+         sudo apt -y update
+         sudo apt install -y build-essential git vim wget bash imagemagick liburi-perl \
+                        openmpi-bin libopenmpi-dev libnetcdff-dev libnetcdf-dev curl
+
+    - name: Install hdf5
+      run: |
+         cd $HOME
+         wget -O $HOME/hdf5-1.14.5.tar.gz https://support.hdfgroup.org/releases/hdf5/v1_14/v1_14_5/downloads/hdf5-1.14.5.tar.gz
+         tar -xvf $HOME/hdf5-1.14.5.tar.gz
+         cd $HOME/hdf5-1.14.5
+         ./configure --enable-fortran  --enable-parallel --enable-hl --enable-shared --prefix=/usr/lib/$ARCH/
+         make
+         sudo make install
+
+    - name: Install netcdf-c
+      run: |
+         cd $HOME
+         wget -O $HOME/netcdf_v4.7.3.tar.gz https://github.com/Unidata/netcdf-c/archive/refs/tags/v4.7.3.tar.gz
+         tar -xvf $HOME/netcdf_v4.7.3.tar.gz
+         cd $HOME/netcdf-c-4.7.3
+         export CPPFLAGS=-I/usr/lib/$ARCH/include
+         export LDFLAGS="-Wl,-rpath,/usr/lib/$ARCH/lib -L/usr/lib/$ARCH/lib -lhdf5_hl -lhdf5"
+         export CC=mpicc
+         ./configure --enable-parallel-tests --enable-netcdf-4 --enable-shared --prefix=/usr/lib/$ARCH/
+         make
+         sudo make install
+
+    - name: Install netcdf-c
+      run: |
+         cd $HOME
+         wget -O $HOME/netcdff_v4.5.2.tar.gz https://github.com/Unidata/netcdf-fortran/archive/refs/tags/v4.5.2.tar.gz
+         tar -xvf $HOME/netcdff_v4.5.2.tar.gz
+         cd $HOME/netcdf-fortran-4.5.2
+         export CPPFLAGS=-I/usr/lib/$ARCH/include
+         export LDFLAGS="-Wl,-rpath,/usr/lib/$ARCH/lib -L/usr/lib/$ARCH/lib -lnetcdf -lhdf5_hl -lhdf5"
+         export FC='mpif90 -fallow-argument-mismatch'
+         ./configure --prefix=/usr/lib/$ARCH/ --enable-shared --enable-parallel-tests
+         make
+         sudo make install
+
+    - name: Install XIOS
+      run: |
+         git clone -b XIOS2 https://gitlab.in2p3.fr/ipsl/projets/xios-projects/xios.git $HOME_XIOS
+
+         rm $HOME_XIOS/arch/arch-GCC_LINUX.env
+         echo "export INC_DIR=/usr/lib/$ARCH/include" >> $HOME_XIOS/arch/arch-GCC_LINUX.env
+         echo "export LIB_DIR=/usr/lib/$ARCH/lib" >> $HOME_XIOS/arch/arch-GCC_LINUX.env
+         echo "export ZLIB_DIR=/usr/lib/" >> $HOME_XIOS/arch/arch-GCC_LINUX.env
+         echo "export OPENMPI_INC_DIR=/usr/lib/$ARCH/openmpi/include" >> $HOME_XIOS/arch/arch-GCC_LINUX.env
+         echo "export OPENMPI_LIB_DIR=/usr/lib/$ARCH/openmpi/lib" >> $HOME_XIOS/arch/arch-GCC_LINUX.env
+
+         rm $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'NETCDF_INCDIR="-I $INC_DIR"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'NETCDF_LIBDIR="-L $LIB_DIR"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'NETCDF_LIB="-lnetcdff -lnetcdf"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'MPI_INCDIR="-I $OPENMPI_INC_DIR"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'MPI_LIBDIR="-L $OPENMPI_LIB_DIR"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'MPI_LIB="-lmpi"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'HDF5_INCDIR="-I $INC_DIR"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'HDF5_LIBDIR="-Wl,-rpath,$LIB_DIR -L$LIB_DIR -L $ZLIB_DIR"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'HDF5_LIB="-lhdf5_hl -lhdf5 -lz"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'BOOST_INCDIR="-I $BOOST_INC_DIR"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'BOOST_LIBDIR="-L $BOOST_LIB_DIR"' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+         echo 'BOOST_LIB=""' >> $HOME_XIOS/arch/arch-GCC_LINUX.path
+
+         sed -i 's/%CCOMPILER[[:space:]]\+mpicc/%CCOMPILER   mpicc -fPIC/' $HOME_XIOS/arch/arch-GCC_LINUX.fcm
+         sed -i 's/%FCOMPILER[[:space:]]\+mpif90/%FCOMPILER   mpif90 -fPIC/' $HOME_XIOS/arch/arch-GCC_LINUX.fcm
+      
+         cd $HOME_XIOS
+         ./make_xios --full --prod --arch GCC_LINUX
+
+    - name: Compile NEMO_V5.0.1
+      run: |
+        git clone --branch 5.0.1 https://forge.nemo-ocean.eu/nemo/nemo.git $HOME_NEMO
+        sed -i 's#%XIOS_HOME[[:space:]]\+/home/jdoe/XIOS#%XIOS_HOME   $HOME_XIOS#' $HOME/tests/C1D_PAPA32/arch-C1D_PAPA32_GCC.fcm
+        cp -r $HOME/tests/C1D_PAPA32 $HOME_NEMO/cfgs
+        cd $HOME_NEMO/cfgs/C1D_PAPA32
+        ./deploy.sh
 
     - name: Install Aronnax
       run: |
         cd $HOME
-        pip install .
+        NEMO_BLD=$HOME_NEMO/cfgs/C1D_PAPA32 pip install .[dev]
 
     - name: Run Aronnax unit tests
       run: |
@@ -42,5 +125,5 @@ jobs:
 
     - name: Run operating tests
       run: |
-        cd $HOME/tests/
-        ./run_all_tests.sh
+        cd $HOME_NEMO/cfgs/C1D_PAPA32/EXP00/RUN
+        python3 ./test_aronnax.py

@@ -69,7 +69,7 @@ def init_scenario():
 # ==================
 from Aronnax.simulation import Run
 
-# -- I : init from None  
+# -- I : init from None
 def test_init_from_none():
     init_scenario()
 
@@ -77,7 +77,7 @@ def test_init_from_none():
     run = Run("TEST_RUN")
     dirs = glob.glob("TEST_RUN*")
     assert len(dirs) == 1
-    assert dirs[0] == "TEST_RUN"    
+    assert "TEST_RUN" in dirs
 
     # nml parser tool
     res = run._nml_itm('nn_date0')
@@ -110,7 +110,7 @@ def test_init_from_none():
     assert run._time == 0.0
 
 
-# -- II : init from existing Run  
+# -- II : init from existing Run
 def test_init_from_dir():
     init_scenario()
     run = Run("TEST_RUN")
@@ -165,14 +165,14 @@ def test_init_existing_run():
     run = Run("TEST_RUN")
     dirs = glob.glob("TEST_RUN*")
     assert len(dirs) == 1
-    assert dirs[0] == "TEST_RUN"    
+    assert "TEST_RUN" in dirs
 
     # Run does not contain results but has failed
     run.dump(True)
     run = Run("TEST_RUN")
     dirs = glob.glob("TEST_RUN*")
     assert len(dirs) == 2
-    assert dirs[-1] == "TEST_RUN_namesake00"    
+    assert "TEST_RUN_namesake00" in dirs
     assert run._nml_itm("cn_exp") == "TEST_RUN_namesake00"
     del run
 
@@ -180,12 +180,11 @@ def test_init_existing_run():
     run = Run("RST_RUN")
     dirs = glob.glob("RST_RUN*")
     assert len(dirs) == 2
-    assert dirs[0] == "RST_RUN_namesake00"    
-
+    assert "RST_RUN_namesake00" in dirs
 
 # -- restart iteration
 def test_next_restart_ite():
-    init_scenario() 
+    init_scenario()
     run = Run("TEST_RUN")
 
     # OCE only - starting ite
@@ -229,15 +228,15 @@ def test_next_restart_ite():
 
 # -- format date
 def test_format_date():
-    init_scenario() 
+    init_scenario()
     run = Run("TEST_RUN")
     assert run.format_date() == '00y00m00d'
 
     run._time = 86400
     assert run.format_date() == '00y00m01d'
-    
+
     run._time = 24834730
     assert run.format_date() == '00y09m08d'
-    
+
     run._time = 10**9
     assert run.format_date() == '31y08m11d'
