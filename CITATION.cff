@@ -13,16 +13,16 @@ authors:
     family-names: Le Sommer
     email: julien.lesommer@univ-grenoble-alpes.fr
     affiliation: 'IGE, CNRS, Université Grenoble Alpes'
-  - name: IGE-MEOM
+  - name: IGE-OPERA
     city: Saint Martin d'Hères
     country: FR
     post-code: '38400'
-identifiers:
+#identifiers:
 #  - type: doi
 #    value:
-  - type: url
-    value: 'https://zenodo.org/records/14515373'
-    description: URL of Aronnax version 0.5.0
+#  - type: url
+#    value: 'https://zenodo.org/records/14515373'
+#    description: URL of Aronnax version 0.5.0
 repository-code: 'https://github.com/alexis-barge/Aronnax'
 abstract: >-
   Aronnax is a Python wrapper of the ocean General Circulation 
