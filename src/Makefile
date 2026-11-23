@@ -1,23 +1,26 @@
 # =====================================
 # Makefile to build NEMO Python wrapper
 # =====================================
-WRAPPER_HOME := $(shell pwd)
-ARCH_FCM     := $(WRAPPER_HOME)/../BLD/arch_nemo.fcm
-CPP_FCM      := $(WRAPPER_HOME)/../BLD/cpp.fcm
-ARCH         := arch_nemo.mk
+WRAPPER_HOME := $(shell pwd)/..
+NEMO_BLD     ?= $(WRAPPER_HOME)/..
+ARCH_FCM     := $(NEMO_BLD)/BLD/arch_nemo.fcm
+CPP_FCM      := $(NEMO_BLD)/BLD/cpp.fcm
+ARCH         := $(WRAPPER_HOME)/build/arch_nemo.mk
 
 NEMO_LIB     := libnemo.so
+TEST_LIB     := libnemo_test.so
 
 export SRC_DIR      = $(WRAPPER_HOME)/src/c_bind
 export OBJ_DIR      = $(WRAPPER_HOME)/build/fortran
 export INC_DIR      = $(WRAPPER_HOME)/build/include
 export LIB_DIR      = $(WRAPPER_HOME)/build/lib
 export PY_DIR       = $(WRAPPER_HOME)/build/python
-export NEMO_INC_DIR = $(WRAPPER_HOME)/../BLD/inc
-export NEMO_OBJ_DIR = $(WRAPPER_HOME)/../BLD/obj
+export NEMO_INC_DIR = $(NEMO_BLD)/BLD/inc
+export NEMO_OBJ_DIR = $(NEMO_BLD)/BLD/obj
 
 NEMO_OBJ = $(wildcard $(NEMO_OBJ_DIR)/*.o)
 OBJ = nemo_api.o utils.o nemo_c_bind.o 
+TEST_OBJ = test_nemo_py_bind.o
 
 ###########################################
 ###########################################
@@ -32,7 +35,7 @@ all: $(ARCH)
 		$(MAKE) --no-print-directory build; \
 	fi
 
-build: dirs $(NEMO_LIB)
+build: dirs $(NEMO_LIB) $(TEST_LIB)
 
 
 ## ---------------------------------------
@@ -60,6 +63,11 @@ $(NEMO_LIB): $(OBJ)
 	@echo "      > DONE shared NEMO"
 	@echo "   -------------------------------"
 
+$(TEST_LIB): $(TEST_OBJ)
+	$(FC) -shared $(FFLAGS) -o $(LIB_DIR)/$@ $(addprefix $(OBJ_DIR)/,$^)
+	@echo "      > DONE test compilation"
+	@echo "   -------------------------------"
+
 %.o: $(SRC_DIR)/%.f90
 	$(FC) -$(CPP) $(CPP_KEYS) $(FFLAGS) -c $< -o $(OBJ_DIR)/$@ -J $(INC_DIR) -I $(NEMO_INC_DIR) -I $(INC_DIR) $(USER_INC)
 
@@ -69,7 +77,7 @@ $(NEMO_LIB): $(OBJ)
 ## ---------------------------------------------------
 dev: dirs
 	@echo "   >>> Compile in dev mode"
-	python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR)
+	(cd ../ && python3 setup.py build_ext --build-lib=$(LIB_DIR) --build-temp=$(PY_DIR))
 	@echo "      > DONE dev compilation"
 	@echo "      > Copy following lines in your Python script:"
 	@echo "import sys"
@@ -81,9 +89,7 @@ dev: dirs
 ## ---------------------------------------
 ## Cleaning
 ## ---------------------------------------
-veryclean: clean
-	pip uninstall Aronnax -y
-
 clean:
-	-rm -f $(ARCH) src/*.so *.sh 
-	-rm -rf $(LIB_DIR) $(OBJ_DIR) $(INC_DIR) $(PY_DIR) build
+	-pip uninstall Aronnax -y
+	-rm -f $(ARCH) 
+	-rm -rf $(LIB_DIR) $(OBJ_DIR) $(INC_DIR) $(PY_DIR) $(WRAPPER_HOME)/build

@@ -1,0 +1,26 @@
+%XIOS_HOME           /home/jdoe/XIOS
+%OASIS_HOME          
+%LIB_HOME	     /usr/lib/$(uname -m)-linux-gnu/
+
+%NCDF_INC            -I%LIB_HOME/include
+%NCDF_LIB            -L%LIB_HOME/lib -Wl,-rpath,%LIB_HOME/lib -lnetcdf -lnetcdff -lhdf5_hl -lhdf5 -L/usr/lib -lz
+%XIOS_INC            -I%XIOS_HOME/inc 
+%XIOS_LIB            -L%XIOS_HOME/lib -lxios -Wl,-rpath,%XIOS_HOME/lib  -lstdc++
+%OASIS_INC           
+%OASIS_LIB           
+
+%CPP	             cpp -Dkey_nosignedzero
+%FC                  mpif90
+%FCFLAGS             -fPIC -fdefault-real-8 -O3 -march=native -funroll-all-loops -fcray-pointer -ffree-line-length-none -fallow-argument-mismatch
+%FFLAGS              %FCFLAGS
+%LD                  mpif90
+%LDFLAGS             
+%FPPFLAGS            -P -traditional
+%AR                  ar
+%ARFLAGS             rs
+%MK                  gmake
+%USER_INC            %XIOS_INC %NCDF_INC
+%USER_LIB            %XIOS_LIB %NCDF_LIB
+
+%CC                  gcc
+%CFLAGS              -O0

@@ -16,7 +16,7 @@ license = {file = "LICENSE"}
 keywords = ["NEMO","GCM","python","wrapper","hybrid"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: None",
+    "License :: OSI Approved",
     "Operating System :: OS Independent",
 ]
 
@@ -29,6 +29,8 @@ dependencies = [
 	"f90nml>=1.5.0",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest", "sphinx", "sphinx-rtd-theme", "myst_parser"]
 
 [project.urls]
 "Homepage" = "https://github.com/alexis-barge/Aronnax"

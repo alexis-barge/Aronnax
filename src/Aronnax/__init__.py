@@ -17,3 +17,7 @@ from .driver import *
 from .backend import *
 from .field import *
 from .simulation import *
+
+# created during build
+from .build_info import __nemo_bld__
+print(f"Aronnax built on NEMO config {__nemo_bld__}")
