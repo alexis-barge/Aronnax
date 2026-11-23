@@ -16,7 +16,7 @@ license = {file = "LICENSE"}
 keywords = ["NEMO","GCM","python","wrapper","hybrid"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: None",
+    "License :: OSI Approved",
     "Operating System :: OS Independent",
 ]
 
